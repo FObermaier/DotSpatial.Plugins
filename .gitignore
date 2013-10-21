@@ -1,0 +1,9 @@
+/*.suo
+/*.DotSettings
+/packages/*
+bin/*
+obj/*
+/Debug
+/Release
+*/obj/*
+*/bin/*

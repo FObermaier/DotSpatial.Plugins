@@ -81,6 +81,7 @@ namespace DotSpatial.Plugins.BruTileLayer
 
             PermaCacheType = (PermaCacheType)manager.GetCustomSetting("PermaCacheType", 0);
             PermaCacheRoot = manager.GetCustomSetting("PermaCacheRoot", Path.GetTempPath());
+            PermaCacheExpireInDays = manager.GetCustomSetting("PermaCacheExpire", 14);
 
             MemoryCacheMinimum = manager.GetCustomSetting("MemoryCacheMinimum", 100);
             MemoryCacheMaximum = manager.GetCustomSetting("MemoryCacheMaximum", 200);

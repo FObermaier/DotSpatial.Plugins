@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using BruTile;
@@ -30,13 +29,16 @@ namespace DotSpatial.Plugins.BruTileLayer
         private MemoryCache<byte[]> _volatileCache;
         private ITileCache<byte[]> _permaCache;
 
-        //private readonly ReaderWriterLockSlim _readerWriterLockSlim = 
-        //    new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
-        //private readonly HashSet<TileInfo> _activeTileRequests = new HashSet<TileInfo>();
-
         private readonly System.Collections.Concurrent.ConcurrentDictionary<TileInfo, int> _activeTileRequests =
             new System.Collections.Concurrent.ConcurrentDictionary<TileInfo, int>();
 
+        /// <summary>
+        /// Creates an instance of this class
+        /// </summary>
+        /// <param name="provider">The tile provider</param>
+        /// <param name="minTiles">min. number of tiles in memory cache</param>
+        /// <param name="maxTiles">max. number of tiles in memory cache</param>
+        /// <param name="permaCache">The perma cache</param>
         internal TileFetcher(ITileProvider provider, int minTiles, int maxTiles,  ITileCache<byte[]> permaCache)
         {
             _provider = provider;
@@ -45,6 +47,12 @@ namespace DotSpatial.Plugins.BruTileLayer
             AsyncMode = BruTileLayerPlugin.Settings.UseAsyncMode;
         }
 
+        /// <summary>
+        /// Method to get the tile
+        /// </summary>
+        /// <param name="tileInfo">The tile info</param>
+        /// <param name="are">A manual reset event object</param>
+        /// <returns>An array of bytes</returns>
         internal byte[] GetTile(TileInfo tileInfo, AutoResetEvent are)
         {
             var index = tileInfo.Index;
@@ -69,11 +77,14 @@ namespace DotSpatial.Plugins.BruTileLayer
             return null;
         }
 
+        /// <summary>
+        /// Method to check if a tile has already been requested
+        /// </summary>
+        /// <param name="tileInfo">The tile info object</param>
+        /// <returns></returns>
         private bool Contains(TileInfo tileInfo)
         {
-            //_readerWriterLockSlim.EnterReadLock();
             var res = _activeTileRequests.ContainsKey(tileInfo);
-            //_readerWriterLockSlim.ExitReadLock();
             return res;
         }
 
@@ -81,20 +92,15 @@ namespace DotSpatial.Plugins.BruTileLayer
         {
             if (!_activeTileRequests.ContainsKey(tileInfo))
             {
-                //_readerWriterLockSlim.EnterWriteLock();
-                Debug.WriteLine("Add: Adding TileInfo(Index({0}, {1}, {2})) to active requests", tileInfo.Index.Level, tileInfo.Index.Row, tileInfo.Index.Col);
+                Debug.WriteLine("Add: Adding TileInfo(Index({0}, {1}, {2})) to active requests", tileInfo.Index.Level,
+                    tileInfo.Index.Row, tileInfo.Index.Col);
                 _activeTileRequests.TryAdd(tileInfo, 1);
-                //_readerWriterLockSlim.ExitWriteLock();
             }
             else
-                Debug.WriteLine("Add: Ignoring TileInfo(Index({0}, {1}, {2})) because it has already been added", tileInfo.Index.Level, tileInfo.Index.Row, tileInfo.Index.Col);
-        }
-
-        private static void Remove(ReaderWriterLockSlim rwlock, HashSet<TileInfo> tileInfos, TileInfo info)
-        {
-            rwlock.EnterWriteLock();
-            tileInfos.Remove(info);
-            rwlock.ExitWriteLock();
+            {
+                Debug.WriteLine("Add: Ignoring TileInfo(Index({0}, {1}, {2})) because it has already been added",
+                    tileInfo.Index.Level, tileInfo.Index.Row, tileInfo.Index.Col);
+            }
         }
 
         private void GetTileOnThread(object parameter)
@@ -109,6 +115,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             {
                 result = _provider.GetTile(tileInfo);
             }
+// ReSharper disable once EmptyGeneralCatchClause
             catch {}
             
             //Try at least once again
@@ -120,8 +127,11 @@ namespace DotSpatial.Plugins.BruTileLayer
                 }
                 catch
                 {
-                    var are = (AutoResetEvent)@params[1];
-                    are.Set();
+                    if (AsyncMode)
+                    {
+                        var are = (AutoResetEvent) @params[1];
+                        are.Set();
+                    }
                 }
             }
 
@@ -133,7 +143,6 @@ namespace DotSpatial.Plugins.BruTileLayer
                 _activeTileRequests.TryRemove(tileInfo, out one);
             }
 
-            //Remove(_readerWriterLockSlim, _activeTileRequests, tileInfo);
             if (result != null)
             {
                 //Add to the volatile cache
@@ -176,12 +185,13 @@ namespace DotSpatial.Plugins.BruTileLayer
             if (TileReceived != null)
                 TileReceived(this, tileReceivedEventArgs);
 
-            //_readerWriterLockSlim.EnterReadLock();
             if (_activeTileRequests.Count == 0)
                 OnQueueEmpty(EventArgs.Empty);
-            //_readerWriterLockSlim.ExitReadLock();
         }
 
+        /// <summary>
+        /// Event raised when <see cref="AsyncMode"/> is <c>true</c> and the tile request queue is empty
+        /// </summary>
         public event EventHandler QueueEmpty;
         
         /// <summary>
@@ -197,7 +207,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                 QueueEmpty(this, eventArgs);
         }
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             if (_volatileCache == null)
                 return;

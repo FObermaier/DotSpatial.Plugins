@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using Amib.Threading;
 using BruTile;
 using BruTile.Cache;
 
@@ -11,6 +12,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         internal class NoopCache : ITileCache<byte[]>
         {
             public static readonly NoopCache Instance = new NoopCache();
+
             public void Add(TileIndex index, byte[] image)
             {
             }
@@ -28,9 +30,10 @@ namespace DotSpatial.Plugins.BruTileLayer
         private ITileProvider _provider;
         private MemoryCache<byte[]> _volatileCache;
         private ITileCache<byte[]> _permaCache;
+        private SmartThreadPool _threadPool;
 
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<TileInfo, int> _activeTileRequests =
-            new System.Collections.Concurrent.ConcurrentDictionary<TileInfo, int>();
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<TileIndex, int> _activeTileRequests =
+            new System.Collections.Concurrent.ConcurrentDictionary<TileIndex, int>();
 
         /// <summary>
         /// Creates an instance of this class
@@ -39,11 +42,26 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// <param name="minTiles">min. number of tiles in memory cache</param>
         /// <param name="maxTiles">max. number of tiles in memory cache</param>
         /// <param name="permaCache">The perma cache</param>
-        internal TileFetcher(ITileProvider provider, int minTiles, int maxTiles,  ITileCache<byte[]> permaCache)
+        internal TileFetcher(ITileProvider provider, int minTiles, int maxTiles, ITileCache<byte[]> permaCache)
+            : this(provider, minTiles, maxTiles, permaCache, BruTileLayerPlugin.Settings.MaximumNumberOfThreads)
+        {
+        }
+
+        /// <summary>
+        /// Creates an instance of this class
+        /// </summary>
+        /// <param name="provider">The tile provider</param>
+        /// <param name="minTiles">min. number of tiles in memory cache</param>
+        /// <param name="maxTiles">max. number of tiles in memory cache</param>
+        /// <param name="permaCache">The perma cache</param>
+        /// <param name="maxNumberOfThreads">The maximum number of threads used to get the tiles</param>
+        internal TileFetcher(ITileProvider provider, int minTiles, int maxTiles, ITileCache<byte[]> permaCache,
+            int maxNumberOfThreads)
         {
             _provider = provider;
             _volatileCache = new MemoryCache<byte[]>(minTiles, maxTiles);
             _permaCache = permaCache ?? NoopCache.Instance;
+            _threadPool = new SmartThreadPool(60000, maxNumberOfThreads);
             AsyncMode = BruTileLayerPlugin.Settings.UseAsyncMode;
         }
 
@@ -67,12 +85,12 @@ namespace DotSpatial.Plugins.BruTileLayer
                 return res;
             }
 
-            if (!Contains(tileInfo))
+            if (!Contains(tileInfo.Index))
             {
-                Add(tileInfo);
-                ThreadPool.QueueUserWorkItem(GetTileOnThread, AsyncMode 
-                                                ? new object[] {tileInfo} 
-                                                : new object[] {tileInfo, are ?? new AutoResetEvent(false)});
+                Add(tileInfo.Index);
+                _threadPool.QueueWorkItem(GetTileOnThread, AsyncMode
+                    ? new object[] {tileInfo}
+                    : new object[] {tileInfo, are ?? new AutoResetEvent(false)});
             }
             return null;
         }
@@ -80,29 +98,37 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// <summary>
         /// Method to check if a tile has already been requested
         /// </summary>
-        /// <param name="tileInfo">The tile info object</param>
-        /// <returns></returns>
-        private bool Contains(TileInfo tileInfo)
+        /// <param name="tileIndex">The tile index object</param>
+        /// <returns><c>true</c> if the index object is already in the queue</returns>
+        private bool Contains(TileIndex tileIndex)
         {
-            var res = _activeTileRequests.ContainsKey(tileInfo);
+            var res = _activeTileRequests.ContainsKey(tileIndex);
             return res;
         }
 
-        private void Add(TileInfo tileInfo)
+        /// <summary>
+        /// Method to add a tile to the active tile requests queue
+        /// </summary>
+        /// <param name="tileIndex">The tile index object</param>
+        private void Add(TileIndex tileIndex)
         {
-            if (!_activeTileRequests.ContainsKey(tileInfo))
+            if (!Contains(tileIndex))
             {
-                Debug.WriteLine("Add: Adding TileInfo(Index({0}, {1}, {2})) to active requests", tileInfo.Index.Level,
-                    tileInfo.Index.Row, tileInfo.Index.Col);
-                _activeTileRequests.TryAdd(tileInfo, 1);
+                Debug.WriteLine("Add: Adding TileIndex({0}, {1}, {2}) to active requests", tileIndex.Level,
+                    tileIndex.Row, tileIndex.Col);
+                _activeTileRequests.TryAdd(tileIndex, 1);
             }
             else
             {
-                Debug.WriteLine("Add: Ignoring TileInfo(Index({0}, {1}, {2})) because it has already been added",
-                    tileInfo.Index.Level, tileInfo.Index.Row, tileInfo.Index.Col);
+                Debug.WriteLine("Add: Ignoring TileIndex({0}, {1}, {2}) because it has already been added",
+                    tileIndex.Level, tileIndex.Row, tileIndex.Col);
             }
         }
 
+        /// <summary>
+        /// Method to actually get the tile from the <see cref="_provider"/>.
+        /// </summary>
+        /// <param name="parameter">The parameter, usually a <see cref="TileInfo"/> and a <see cref="AutoResetEvent"/></param>
         private void GetTileOnThread(object parameter)
         {
             var @params = (object[]) parameter;
@@ -116,8 +142,10 @@ namespace DotSpatial.Plugins.BruTileLayer
                 result = _provider.GetTile(tileInfo);
             }
 // ReSharper disable once EmptyGeneralCatchClause
-            catch {}
-            
+            catch
+            {
+            }
+
             //Try at least once again
             if (result == null)
             {
@@ -127,7 +155,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                 }
                 catch
                 {
-                    if (AsyncMode)
+                    if (!AsyncMode)
                     {
                         var are = (AutoResetEvent) @params[1];
                         are.Set();
@@ -137,10 +165,10 @@ namespace DotSpatial.Plugins.BruTileLayer
 
             //Remove the tile info request
             int one;
-            if (!_activeTileRequests.TryRemove(tileInfo, out one))
+            if (!_activeTileRequests.TryRemove(tileInfo.Index, out one))
             {
                 //try again
-                _activeTileRequests.TryRemove(tileInfo, out one);
+                _activeTileRequests.TryRemove(tileInfo.Index, out one);
             }
 
             if (result != null)
@@ -179,7 +207,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// <param name="tileReceivedEventArgs">The event arguments</param>
         private void OnTileReceived(TileReceivedEventArgs tileReceivedEventArgs)
         {
-            // Don't raise events if we are in async mode!
+            // Don't raise events if we are not in async mode!
             if (!AsyncMode) return;
 
             if (TileReceived != null)
@@ -193,14 +221,14 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// Event raised when <see cref="AsyncMode"/> is <c>true</c> and the tile request queue is empty
         /// </summary>
         public event EventHandler QueueEmpty;
-        
+
         /// <summary>
         /// Event invoker for the <see cref="TileReceived"/> event
         /// </summary>
         /// <param name="eventArgs">The event arguments</param>
         private void OnQueueEmpty(EventArgs eventArgs)
         {
-            // Don't raise events if we are in async mode!
+            // Don't raise events if we are not in async mode!
             if (!AsyncMode) return;
 
             if (QueueEmpty != null)
@@ -211,10 +239,29 @@ namespace DotSpatial.Plugins.BruTileLayer
         {
             if (_volatileCache == null)
                 return;
+
             _volatileCache.Clear();
             _volatileCache = null;
             _provider = null;
             _permaCache = null;
+
+            _threadPool.Dispose();
+            _threadPool = null;
+        }
+
+        /// <summary>
+        /// Method to cancel the working queue, see http://dotspatial.codeplex.com/discussions/473428
+        /// </summary>
+        public void Clear()
+        {
+            _activeTileRequests.Clear();
+            /*
+            foreach (var request in _activeTileRequests.ToArray())
+            {
+                int one;
+                if (!_workingTileRequests.ContainsKey(request.Key)) _activeTileRequests.TryRemove(request.Key, out one);
+            }
+             */
         }
     }
 }

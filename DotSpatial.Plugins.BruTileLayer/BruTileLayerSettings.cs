@@ -8,6 +8,8 @@ namespace DotSpatial.Plugins.BruTileLayer
 {
     internal class BruTileLayerSettings
     {
+        private int _maximumNumberOfThreads;
+
         internal BruTileLayerSettings()
         {
             PermaCacheRoot = Path.GetTempPath();
@@ -19,6 +21,8 @@ namespace DotSpatial.Plugins.BruTileLayer
             
             BingMapsToken = string.Empty;
             UseAsyncMode = false;
+
+            MaximumNumberOfThreads = 4;
         }
 
         /// <summary>
@@ -61,9 +65,23 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// </summary>
         public string PermaCacheFormat { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating the maximum number of threads used for <see cref="TileFetcher"/>
+        /// </summary>
+        public int MaximumNumberOfThreads
+        {
+            get { return _maximumNumberOfThreads; }
+            set
+            {
+                if (value < 1) value = 1;
+                if (value > 25) value = 25;
+                _maximumNumberOfThreads = value;
+            }
+        }
+
         public void Serialize(SerializationManager manager)
         {
-            manager.SetCustomSetting("TileFetcherAsyncMode", UseAsyncMode);
+            manager.SetCustomSetting("UseAsyncMode", UseAsyncMode);
 
             manager.SetCustomSetting("PermaCacheType", (int)PermaCacheType);
             manager.SetCustomSetting("PermaCacheRoot", PermaCacheRoot);
@@ -73,6 +91,8 @@ namespace DotSpatial.Plugins.BruTileLayer
             manager.SetCustomSetting("MemoryCacheMaximum", MemoryCacheMaximum);
 
             manager.SetCustomSetting("BingMapsToken", BingMapsToken);
+
+            manager.SetCustomSetting("MaximumNumberOfThreads", MaximumNumberOfThreads);
         }
 
         public void Deserialize(SerializationManager manager)
@@ -87,6 +107,8 @@ namespace DotSpatial.Plugins.BruTileLayer
             MemoryCacheMaximum = manager.GetCustomSetting("MemoryCacheMaximum", 200);
 
             BingMapsToken = manager.GetCustomSetting("BingMapsToken", string.Empty);
+
+            MaximumNumberOfThreads = manager.GetCustomSetting("MaximumNumberOfThreads", 4);
         }
     }
 }

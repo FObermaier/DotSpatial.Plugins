@@ -2,6 +2,7 @@
 using System.Reflection;
 using DotSpatial.Controls;
 using DotSpatial.Controls.Header;
+using DotSpatial.Projections;
 
 namespace DotSpatial.Plugins.BruTileLayer
 {

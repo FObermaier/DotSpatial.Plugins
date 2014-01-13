@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using BruTile;
 using BruTile.Extensions;
 using BruTile.Web;
+using BruTile.Wmsc;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 {

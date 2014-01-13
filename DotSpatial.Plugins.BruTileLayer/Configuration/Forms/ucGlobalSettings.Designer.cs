@@ -49,12 +49,15 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             this.gbTileFetcher = new System.Windows.Forms.GroupBox();
             this.chkAsyncMode = new System.Windows.Forms.CheckBox();
             this.btnApply = new System.Windows.Forms.Button();
+            this.lblThreads = new System.Windows.Forms.Label();
+            this.nudNumThreads = new System.Windows.Forms.NumericUpDown();
             this.gbPermaCache.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudExpire)).BeginInit();
             this.gbVolatileCache.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudMaximum)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudMinimum)).BeginInit();
             this.gbTileFetcher.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudNumThreads)).BeginInit();
             this.SuspendLayout();
             // 
             // gbPermaCache
@@ -268,10 +271,12 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             // 
             this.gbTileFetcher.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.gbTileFetcher.Controls.Add(this.lblThreads);
+            this.gbTileFetcher.Controls.Add(this.nudNumThreads);
             this.gbTileFetcher.Controls.Add(this.chkAsyncMode);
             this.gbTileFetcher.Location = new System.Drawing.Point(3, 186);
             this.gbTileFetcher.Name = "gbTileFetcher";
-            this.gbTileFetcher.Size = new System.Drawing.Size(467, 43);
+            this.gbTileFetcher.Size = new System.Drawing.Size(467, 70);
             this.gbTileFetcher.TabIndex = 7;
             this.gbTileFetcher.TabStop = false;
             this.gbTileFetcher.Text = "Tile fetcher";
@@ -289,13 +294,45 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             // btnApply
             // 
             this.btnApply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnApply.Location = new System.Drawing.Point(395, 235);
+            this.btnApply.Location = new System.Drawing.Point(395, 262);
             this.btnApply.Name = "btnApply";
             this.btnApply.Size = new System.Drawing.Size(75, 23);
             this.btnApply.TabIndex = 8;
             this.btnApply.Text = "&Apply";
             this.btnApply.UseVisualStyleBackColor = true;
             this.btnApply.Click += new System.EventHandler(this.btnApply_Click);
+            // 
+            // lblThreads
+            // 
+            this.lblThreads.AutoSize = true;
+            this.lblThreads.Location = new System.Drawing.Point(14, 42);
+            this.lblThreads.Name = "lblThreads";
+            this.lblThreads.Size = new System.Drawing.Size(129, 13);
+            this.lblThreads.TabIndex = 17;
+            this.lblThreads.Text = "Number of threads to use:";
+            // 
+            // numericUpDown1
+            // 
+            this.nudNumThreads.Location = new System.Drawing.Point(207, 40);
+            this.nudNumThreads.Maximum = new decimal(new int[] {
+            25,
+            0,
+            0,
+            0});
+            this.nudNumThreads.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.nudNumThreads.Name = "nudNumThreads";
+            this.nudNumThreads.Size = new System.Drawing.Size(55, 20);
+            this.nudNumThreads.TabIndex = 16;
+            this.nudNumThreads.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.nudNumThreads.Value = new decimal(new int[] {
+            4,
+            0,
+            0,
+            0});
             // 
             // ucGlobalSettings
             // 
@@ -306,7 +343,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             this.Controls.Add(this.gbVolatileCache);
             this.Controls.Add(this.gbPermaCache);
             this.Name = "ucGlobalSettings";
-            this.Size = new System.Drawing.Size(477, 262);
+            this.Size = new System.Drawing.Size(477, 289);
             this.gbPermaCache.ResumeLayout(false);
             this.gbPermaCache.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudExpire)).EndInit();
@@ -316,6 +353,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             ((System.ComponentModel.ISupportInitialize)(this.nudMinimum)).EndInit();
             this.gbTileFetcher.ResumeLayout(false);
             this.gbTileFetcher.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudNumThreads)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -362,6 +400,9 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             settings.MemoryCacheMinimum = (int)nudMinimum.Value;
             settings.MemoryCacheMaximum = (int)nudMaximum.Value;
 
+            
+            settings.MaximumNumberOfThreads = (int) nudNumThreads.Value;
+
         }
 
         private void nudMinimum_ValueChanged(object sender, System.EventArgs e)
@@ -373,5 +414,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
         private NumericUpDown nudExpire;
         private ComboBox cboImageFormat;
         private Label lblFormat;
+        private Label lblThreads;
+        private NumericUpDown nudNumThreads;
     }
 }

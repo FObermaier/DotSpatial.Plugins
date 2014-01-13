@@ -38,6 +38,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
         public void SaveSetting()
         {
             _selectedIndex = cboConfigurations.SelectedIndex;
+            _currentEditor.SaveSettings();
         }
 
         public void AddFromCache()

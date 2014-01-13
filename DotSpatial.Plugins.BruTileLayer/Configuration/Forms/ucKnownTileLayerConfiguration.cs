@@ -4,9 +4,9 @@ using System.Windows.Forms;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 {
-    public partial class ucOsmLayerConfiguration : UserControl, IConfigurationEditor
+    public partial class ucKnownTileLayerConfiguration : UserControl, IConfigurationEditor
     {
-        public ucOsmLayerConfiguration()
+        public ucKnownTileLayerConfiguration()
         {
             InitializeComponent();
         }
@@ -15,7 +15,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
         {
             base.OnLoad(e);
 
-            foreach (var bmt in Enum.GetNames(typeof (BruTile.Web.KnownOsmTileServers)))
+            foreach (var bmt in Enum.GetNames(typeof (BruTile.Web.KnownTileServers)))
             {
                 if (bmt == "Custom") continue;
                 cboKnownOsmMapTypes.Items.Add(bmt);
@@ -27,9 +27,11 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 
         public IConfiguration Create()
         {
-            var bmt = (BruTile.Web.KnownOsmTileServers)Enum.Parse(typeof(BruTile.Web.KnownOsmTileServers), cboKnownOsmMapTypes.Text);
-            return new OsmLayerConfiguration(System.IO.Path.Combine(new BruTileLayerSettings().PermaCacheRoot,cboKnownOsmMapTypes.Text),
+            var bmt = (BruTile.Web.KnownTileServers)Enum.Parse(typeof(BruTile.Web.KnownTileServers), cboKnownOsmMapTypes.Text);
+            return new KnownTileLayerConfiguration(System.IO.Path.Combine(new BruTileLayerSettings().PermaCacheRoot,cboKnownOsmMapTypes.Text),
                 bmt, txtOsmMapTypeToken.Text);
         }
+
+        public void SaveSettings() {}
     }
 }

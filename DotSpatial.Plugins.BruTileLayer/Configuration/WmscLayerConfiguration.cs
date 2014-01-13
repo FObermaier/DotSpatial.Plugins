@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using BruTile;
 using BruTile.Cache;
 using BruTile.Web;
+using BruTile.Wmsc;
 using DotSpatial.Serialization;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration
@@ -11,7 +13,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
     public class WmscLayerConfiguration : PermaCacheConfiguration, IConfiguration
     {
         [Serialize("fileCacheRoot", ConstructorArgumentIndex = 0)]
-        private string _fileCacheRoot;
+        private readonly string _fileCacheRoot;
 
         [Serialize("url")]
         private string _url;
@@ -38,7 +40,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         [Serialize("originY")]
         private double _originY;
         [Serialize("resolutions")]
-        private Dictionary<string, double> _resolutions;
+        private Dictionary<string, Resolution> _resolutions;
         [Serialize("srs")]
         private string _srs;
         [Serialize("width")]
@@ -68,13 +70,14 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         public WmscLayerConfiguration(string fileCacheRoot, string name, WmscTileSource source)
             : base(BruTileLayerPlugin.Settings.PermaCacheType, fileCacheRoot)
         {
+            _fileCacheRoot = fileCacheRoot;
             LegendText = name;
 
             var provider = source.Provider as WebTileProvider;
             if (provider == null)
                 throw new ArgumentException("Source does not have a WebTileProvider", "source");
 
-            var request = ReflectRequest(provider);
+            var request = ReflectionHelper.ReflectRequest<WmscRequest>(provider);
             if (request == null)
                 throw new ArgumentException("Source does not have a WmscRequest" ,"source");
 
@@ -82,27 +85,38 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             SafeSchema(source.Schema);
 
             TileSource = source;
+            TileCache = CreateTileCache();
+
             _tileFetcher = new TileFetcher(provider, BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                                            BruTileLayerPlugin.Settings.MemoryCacheMaximum, TileCache);
             _initialized = true;
         }
 
-        internal static WmscRequest ReflectRequest(WebTileProvider provider)
-        {
-            var fi = typeof(WebTileProvider).GetField("_request", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (fi == null)
-                throw new ArgumentException("Provider does not have a private field '_request'", "provider");
-
-            return (WmscRequest)fi.GetValue(provider);
-        }
-
         private void SafeRequest(WmscRequest request)
         {
-            _url = ReflectBaseUri(request).ToString();
-            _layers = new List<string>(ReflectListItems(request, "_layers"));
-            _styles = new List<string>(ReflectListItems(request, "_styles"));
-            _customParameters = new Dictionary<string, string>(ReflectDictionary(request, "_customParameters"));
-            _version = request.Version;
+            _url = ReflectionHelper.ReflectBaseUri(request).ToString();
+            _layers = new List<string>(ReflectionHelper.ReflectListItems(request, "_layers"));
+            _styles = new List<string>(ReflectionHelper.ReflectListItems(request, "_styles"));
+            _customParameters = new Dictionary<string, string>(ReflectionHelper.ReflectDictionary(request, "_customParameters"));
+            _version = ReflectionHelper.Reflect<string>(request, "_version");
+        }
+        private void SafeSchema(ITileSchema schema)
+        {
+            _axis = schema.Axis;
+            _minX = schema.Extent.MinX;
+            _maxX = schema.Extent.MaxX;
+            _minY = schema.Extent.MinY;
+            _maxY = schema.Extent.MaxY;
+            _format = schema.Format;
+            _height = schema.GetTileHeight(String.Empty);
+            _width = schema.GetTileWidth(String.Empty);
+            _schemaName = schema.Name;
+            _originX = schema.GetOriginX(String.Empty);
+            _originY = schema.GetOriginY(String.Empty);
+            _srs = schema.Srs;
+            _resolutions = new Dictionary<string, Resolution>();
+            foreach (var resolution in schema.Resolutions)
+                _resolutions.Add(resolution.Key, resolution.Value);
         }
 
         /// <summary>
@@ -110,6 +124,9 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         /// </summary>
         public TileFetcher TileFetcher { get { return _tileFetcher; } }
 
+        /// <summary>
+        /// Method called prior to any tile access
+        /// </summary>
         public void Initialize()
         {
             if (_initialized) return;
@@ -120,7 +137,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             
             ITileProvider provider = new WebTileProvider(request);
             TileSource = (WmscTileSource)Activator.CreateInstance(typeof(WmscTileSource), BindingFlags.NonPublic, schema, provider);
-
+            TileCache = CreateTileCache();
             _tileFetcher = new TileFetcher(TileSource.Provider,
                                            BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                                            BruTileLayerPlugin.Settings.MemoryCacheMaximum,
@@ -128,24 +145,6 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
 
         }
 
-        private void SafeSchema(ITileSchema schema)
-        {
-            _axis = schema.Axis;
-            _minX = schema.Extent.MinX;
-            _maxX = schema.Extent.MaxX;
-            _minY = schema.Extent.MinY;
-            _maxY = schema.Extent.MaxY;
-            _format = schema.Format;
-            _height = schema.Height;
-            _width = schema.Width;
-            _schemaName = schema.Name;
-            _originX = schema.OriginX;
-            _originY = schema.OriginY;
-            _srs = schema.Srs;
-            _resolutions = new Dictionary<string, double>();
-            foreach (var resolution in schema.Resolutions)
-                _resolutions.Add(resolution.Id, resolution.UnitsPerPixel);
-        }
 
         private ITileSchema RestoreSchema()
         {
@@ -161,49 +160,14 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
                     OriginY = _originY,
                     Srs = _srs
                 };
+
             foreach (var resolution in _resolutions)
             {
-                var res = new Resolution {Id = resolution.Key, UnitsPerPixel = resolution.Value};
-                schema.Resolutions.Add(res);
+                schema.Resolutions.Add(resolution);
             }
             return schema;
         }
 
-        internal static Uri ReflectBaseUri(WmscRequest request)
-        {
-            var fi = typeof (WmscRequest).GetField("_baseUrl", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (fi == null) 
-                throw new ArgumentException("Request does not have a private field '_baseUri'", "request");
-
-            return (Uri) fi.GetValue(request);
-        }
-
-        private static IEnumerable<string> ReflectListItems(WmscRequest request, string field)
-        {
-            var fi = typeof(WmscRequest).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
-            if (fi == null)
-                throw new ArgumentException("Request does not have a private field '" + field + "'", "request");
-
-            return (IEnumerable<string>) fi.GetValue(request);
-        }
-
-        private static IDictionary<string, string> ReflectDictionary(WmscRequest request, string field)
-        {
-            var fi = typeof(WmscRequest).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
-            if (fi == null)
-                throw new ArgumentException("Request does not have a private field '" + field + "'", "request");
-
-            return (IDictionary<string, string>)fi.GetValue(request);
-        }
-
-        private static T Reflect<T>(WmscRequest request, string field)
-        {
-            var fi = typeof(WmscRequest).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
-            if (fi == null)
-                throw new ArgumentException("Request does not have a private field '" + field + "'", "request");
-
-            return (T)fi.GetValue(request);
-        }
 
         public ITileSource TileSource { get; private set; }
         public ITileCache<byte[]> TileCache { get; private set; }

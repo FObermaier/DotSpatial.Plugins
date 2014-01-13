@@ -78,6 +78,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             this.ucConfigurationContainer1.Name = "ucConfigurationContainer1";
             this.ucConfigurationContainer1.Size = new System.Drawing.Size(407, 361);
             this.ucConfigurationContainer1.TabIndex = 0;
+            this.ucConfigurationContainer1.Load += new System.EventHandler(this.ucConfigurationContainer1_Load);
             // 
             // tpSettings
             // 

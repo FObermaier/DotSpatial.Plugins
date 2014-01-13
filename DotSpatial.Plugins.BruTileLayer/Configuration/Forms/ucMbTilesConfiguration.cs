@@ -19,5 +19,8 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             var path = txtMbTilesFile.Text;
             return new MbTilesConfiguration(path);
         }
+
+        public void SaveSettings() { }
+
     }
 }

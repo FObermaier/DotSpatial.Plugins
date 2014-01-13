@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.IO;
 using System.Xml.Linq;
-using BruTile.Web.TmsService;
+using BruTile.Tms;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 {
@@ -79,5 +79,8 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
                 Path.Combine(new BruTileLayerSettings().PermaCacheRoot, cboProvider.Text, tms.Title),
                 tms.Title, tms.Href, Inverted, false);
         }
+
+        public void SaveSettings() { }
+
     }
 }

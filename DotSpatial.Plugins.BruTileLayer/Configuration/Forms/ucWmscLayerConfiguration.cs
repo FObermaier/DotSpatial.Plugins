@@ -4,8 +4,7 @@ using System.IO;
 using System.Windows.Forms;
 using BruTile.Web;
 using BruTile;
-using BruTile.Web.Wms;
-using Iesi.Collections;
+using BruTile.Wmsc;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 {
@@ -78,13 +77,19 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
         {
             var wmsc = (WmscTileSource) _selectedTileSource;
             var wmscp = (WebTileProvider) wmsc.Provider;
-            var wmscr = WmscLayerConfiguration.ReflectRequest(wmscp);
-            var uri = WmscLayerConfiguration.ReflectBaseUri(wmscr);
+            var wmscr = ReflectionHelper.ReflectRequest<WmscRequest>(wmscp);
+            var uri = ReflectionHelper.ReflectBaseUri(wmscr);
             var host = uri.Host.Replace(".", "_");
             
             return new WmscLayerConfiguration(
-                System.IO.Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot, host),  "Wmsc", wmsc);
+                Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot, host),  "Wmsc", wmsc);
         }
+
+        public void SaveSettings()
+        {
+            WriteSettings();
+        }
+
     }
 
 }

@@ -2,8 +2,7 @@
 using System.Net;
 using BruTile;
 using BruTile.Cache;
-using BruTile.Web;
-using BruTile.Web.TmsService;
+using BruTile.Tms;
 using DotSpatial.Serialization;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration

@@ -6,7 +6,7 @@ using System.IO;
 using System.Net;
 using System.Windows.Forms;
 using System.Xml;
-using BruTile.Web.TmsService;
+using BruTile.Tms;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 {

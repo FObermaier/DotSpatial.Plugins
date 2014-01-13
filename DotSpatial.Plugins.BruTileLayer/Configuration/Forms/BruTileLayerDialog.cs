@@ -21,7 +21,9 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
                 return;
 
             //DotSpatial.Projections.KnownCoordinateSystems.Projected.w
-            Map.Layers.Insert(0, new BruTileLayer(e.BruTileLayerConfiguration));
+            var l = new BruTileLayer(e.BruTileLayerConfiguration);
+            l.Reproject(Map.Projection);
+            Map.Layers.Insert(0, l);
         }
 
         public IMap Map { get; set; }
@@ -43,7 +45,12 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 
         private void SaveSettings()
         {
-            
+            //ucConfigurationContainer1.SaveSetting();
+        }
+
+        private void ucConfigurationContainer1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

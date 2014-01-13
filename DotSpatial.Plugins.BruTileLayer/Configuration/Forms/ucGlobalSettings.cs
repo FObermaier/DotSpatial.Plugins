@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Iesi.Collections;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 {
@@ -24,6 +25,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             nudMaximum.Value = settings.MemoryCacheMaximum;
 
             chkAsyncMode.Checked = settings.UseAsyncMode;
+            nudNumThreads.Value = settings.MaximumNumberOfThreads;
         }
 
         private void FillPermaCacheSettings(BruTileLayerSettings settings)
@@ -51,6 +53,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             cboImageFormat.SelectedIndex = si;
             
             nudExpire.Value = settings.PermaCacheExpireInDays;
+            nudNumThreads.Value = settings.MaximumNumberOfThreads;
 
         }
 

@@ -17,5 +17,10 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
         /// </summary>
         /// <returns>The configuration</returns>
         IConfiguration Create();
+
+        /// <summary>
+        /// Saves the settings or defined tile services
+        /// </summary>
+        void SaveSettings();
     }
 }

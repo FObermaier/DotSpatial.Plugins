@@ -34,5 +34,8 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 
             return new FileTileLayerConfiguration(Path.GetDirectoryName(path),path, format, 100, 200);
         }
+
+        public void SaveSettings() { }
+
     }
 }

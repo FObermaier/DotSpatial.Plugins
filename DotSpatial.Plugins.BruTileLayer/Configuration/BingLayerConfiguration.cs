@@ -21,7 +21,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             : base(BruTileLayerPlugin.Settings.PermaCacheType, fileCacheRoot)
         {
             _bingMapType = bingMapType;
-            _bingToken = _bingToken;
+            _bingToken = bingToken;
 
             var url = string.IsNullOrEmpty(bingToken)
                           ? BingRequest.UrlBingStaging

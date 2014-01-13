@@ -29,5 +29,9 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
                 cboBingMapsType.Text);
             return new BingLayerConfiguration(pcr, bmt, txtBingMapsToken.Text);
         }
+
+        public void SaveSettings()
+        {
+        }
     }
 }

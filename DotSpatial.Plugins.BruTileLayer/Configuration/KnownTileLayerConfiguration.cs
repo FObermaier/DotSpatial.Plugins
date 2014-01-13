@@ -8,10 +8,10 @@ using DotSpatial.Serialization;
 namespace DotSpatial.Plugins.BruTileLayer.Configuration
 {
     [Serializable, InheritedExport]
-    public class OsmLayerConfiguration : PermaCacheConfiguration, IConfiguration
+    public class KnownTileLayerConfiguration : PermaCacheConfiguration, IConfiguration
     {
-        [Serialize("knownOsmTileServers", ConstructorArgumentIndex = 1)] 
-        private readonly KnownOsmTileServers _knownOsmTileServers;
+        [Serialize("knownTileServers", ConstructorArgumentIndex = 1)] 
+        private readonly KnownTileServers _knownTileServers;
 
         [Serialize("apiKey", ConstructorArgumentIndex = 2)]
         private readonly string _apiKey;
@@ -19,14 +19,15 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         [NonSerialized]
         private readonly TileFetcher _tileFetcher;
 
-        public OsmLayerConfiguration(string fileCacheRoot, KnownOsmTileServers tileServers, string apiKey) 
+        public KnownTileLayerConfiguration(string fileCacheRoot, KnownTileServers tileServers, string apiKey) 
             : base(BruTileLayerPlugin.Settings.PermaCacheType, fileCacheRoot)
         {
-            _knownOsmTileServers = tileServers;
+            _knownTileServers = tileServers;
             _apiKey = apiKey;
-            if (tileServers == KnownOsmTileServers.Custom)
+            /*
+            if (tileServers == KnownTileServers.Custom)
                 throw new NotSupportedException();
-
+            */
             var req = new OsmRequest(OsmTileServerConfig.Create(tileServers, apiKey));
 
             TileSource = new OsmTileSource(req);
@@ -58,7 +59,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         /// <returns>The cloned configuration</returns>
         public IConfiguration Clone()
         {
-            return new OsmLayerConfiguration(PermaCacheRoot, _knownOsmTileServers, _apiKey);
+            return new KnownTileLayerConfiguration(PermaCacheRoot, _knownTileServers, _apiKey);
         }
 
         /// <summary>

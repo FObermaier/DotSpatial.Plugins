@@ -34,6 +34,8 @@ namespace DotSpatial.Plugins.BruTileLayer
 
         private readonly System.Collections.Concurrent.ConcurrentDictionary<TileIndex, int> _activeTileRequests =
             new System.Collections.Concurrent.ConcurrentDictionary<TileIndex, int>();
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<TileIndex, int> _openTileRequests =
+            new System.Collections.Concurrent.ConcurrentDictionary<TileIndex, int>();
 
         /// <summary>
         /// Creates an instance of this class
@@ -61,7 +63,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             _provider = provider;
             _volatileCache = new MemoryCache<byte[]>(minTiles, maxTiles);
             _permaCache = permaCache ?? NoopCache.Instance;
-            _threadPool = new SmartThreadPool(60000, maxNumberOfThreads);
+            _threadPool = new SmartThreadPool(10000, maxNumberOfThreads);
             AsyncMode = BruTileLayerPlugin.Settings.UseAsyncMode;
         }
 
@@ -102,7 +104,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// <returns><c>true</c> if the index object is already in the queue</returns>
         private bool Contains(TileIndex tileIndex)
         {
-            var res = _activeTileRequests.ContainsKey(tileIndex);
+            var res = _activeTileRequests.ContainsKey(tileIndex) || _openTileRequests.ContainsKey(tileIndex);
             return res;
         }
 
@@ -139,6 +141,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             //Try get the tile
             try
             {
+                _openTileRequests.TryAdd(tileInfo.Index, 1); 
                 result = _provider.GetTile(tileInfo);
             }
 // ReSharper disable once EmptyGeneralCatchClause
@@ -170,6 +173,12 @@ namespace DotSpatial.Plugins.BruTileLayer
                 //try again
                 _activeTileRequests.TryRemove(tileInfo.Index, out one);
             }
+            if (!_openTileRequests.TryRemove(tileInfo.Index, out one))
+            {
+                //try again
+                _openTileRequests.TryRemove(tileInfo.Index, out one);
+            }
+
 
             if (result != null)
             {
@@ -196,6 +205,11 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// </summary>
         public bool AsyncMode { get; set; }
 
+        public bool Ready()
+        {
+            return (_activeTileRequests.Count == 0 && _openTileRequests.Count == 0);
+        }
+
         /// <summary>
         /// Event raised when tile fetcher is in <see cref="AsyncMode"/> and a tile has been received.
         /// </summary>
@@ -213,7 +227,10 @@ namespace DotSpatial.Plugins.BruTileLayer
             if (TileReceived != null)
                 TileReceived(this, tileReceivedEventArgs);
 
-            if (_activeTileRequests.Count == 0)
+            var i = tileReceivedEventArgs.TileInfo.Index;
+            System.Diagnostics.Debug.WriteLine("Tile received (Index({0}, {1}, {2})) {3} tiles loading", i.Level, i.Row, i.Col, _openTileRequests.Count);
+
+            if (_activeTileRequests.Count == 0 && _openTileRequests.Count == 0)
                 OnQueueEmpty(EventArgs.Empty);
         }
 
@@ -254,14 +271,17 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// </summary>
         public void Clear()
         {
-            _activeTileRequests.Clear();
-            /*
+            _threadPool.Cancel(false);
             foreach (var request in _activeTileRequests.ToArray())
             {
                 int one;
-                if (!_workingTileRequests.ContainsKey(request.Key)) _activeTileRequests.TryRemove(request.Key, out one);
+                if (!_openTileRequests.ContainsKey(request.Key)) 
+                {
+                    if (!_activeTileRequests.TryRemove(request.Key, out one))
+                        _activeTileRequests.TryRemove(request.Key, out one);
+                }
+                _openTileRequests.Clear();
             }
-             */
         }
     }
 }

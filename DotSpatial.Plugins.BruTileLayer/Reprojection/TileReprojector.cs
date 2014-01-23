@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Dynamic;
 using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Messaging;
-using BruTile.Wmts.Generated;
 using DotSpatial.Controls;
 using DotSpatial.Data;
 using DotSpatial.Projections;

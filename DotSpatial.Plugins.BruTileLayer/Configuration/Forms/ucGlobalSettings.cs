@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using Iesi.Collections;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 {

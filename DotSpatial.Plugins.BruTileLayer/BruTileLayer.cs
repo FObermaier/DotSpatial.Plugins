@@ -26,12 +26,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using BruTile;
@@ -147,6 +149,11 @@ namespace DotSpatial.Plugins.BruTileLayer
         [NonSerialized]
         private readonly TileFetcher _tileFetcher;
 
+        [NonSerialized]
+        private readonly Stopwatch _stopwatch = new Stopwatch();
+
+        [NonSerialized] private string _level;
+
         [Serialize("projection")]
 // ReSharper disable InconsistentNaming
         private ProjectionInfo _projection
@@ -233,7 +240,17 @@ namespace DotSpatial.Plugins.BruTileLayer
         private void HandleTileReceived(object sender, TileReceivedEventArgs e)
         {
             var i = e.TileInfo.Index;
-            System.Diagnostics.Debug.WriteLine("Tile received (Index({0}, {1}, {2}))", i.Level, i.Row, i.Col);
+            if (i.Level != _level) return;
+            
+            //System.Diagnostics.Debug.WriteLine("Tile received (Index({0}, {1}, {2}))", i.Level, i.Row, i.Col);
+// some timed refreshes if the server becomes slooow...
+            if (_stopwatch.Elapsed.Seconds > 1 && ! _tileFetcher.Ready())
+            {
+                _stopwatch.Reset();
+                Invalidate();
+                _stopwatch.Reset();
+                return;
+            }
 
             var ext = ToBrutileExtent(MapFrame.ViewExtents);
             if (ext.Intersects(e.TileInfo.Extent))
@@ -244,6 +261,7 @@ namespace DotSpatial.Plugins.BruTileLayer
 
         private void HandleQueueEmpty(object sender, EventArgs empty)
         {
+            _stopwatch.Stop();
             Invalidate();
         }
 
@@ -384,7 +402,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             get
             {
                 return _targetProjection != null 
-                    ? ReprojectExtent(MyExtent, _projectionInfo, _targetProjection) 
+                    ? MyExtent.Reproject(_projectionInfo, _targetProjection) 
                     : MyExtent;
             }
         }
@@ -472,65 +490,6 @@ namespace DotSpatial.Plugins.BruTileLayer
          */
         //public Symbology.RasterSymbolizer RasterSymbolizer { get; set; }
 
-        private static Extent ReprojectExtent(Extent extent, ProjectionInfo source, ProjectionInfo target, int depth = 0)
-        {
-            var xy = new[]
-                {
-                    extent.MinX, extent.MinY, extent.MaxX, extent.MinY,
-                    extent.MaxX, extent.MaxY, extent.MinX, extent.MaxY
-                };
-            
-            Projections.Reproject.ReprojectPoints(xy, null, source, target, 0, 4);
-            var res = ToExtent(xy);
-            if (double.IsNaN(res.Width) || double.IsNaN(res.Height))
-            {
-                return ReprojectQuad(extent, source, target, depth);
-            }
-            return ToExtent(xy);
-        }
-
-        private static Extent ReprojectQuad(Extent extent, ProjectionInfo source, ProjectionInfo target, int depth = 0)
-        {
-            if (depth > 4) return new Extent();
-            var width = extent.Width/2;
-            var height = extent.Height/2;
-
-            var quad = new []
-            {
-                new Extent(extent.MinX, extent.MinY + height, extent.MinX +width, extent.MaxY), 
-                new Extent(extent.MinX + width, extent.MinY + height, extent.MaxX, extent.MaxY), 
-                new Extent(extent.MinX, extent.MinY, extent.MinX + width, extent.MinY + height), 
-                new Extent(extent.MinX + width, extent.MinY, extent.MaxX, extent.MinY + height) 
-            };
-
-            var res = new Extent();
-            for (var i = 0; i < 4; i++)
-            {
-                var e = ReprojectExtent(quad[i], source, target, depth+1);
-                if (!e.IsEmpty() && !double.IsInfinity(e.Width) && !double.IsInfinity(e.Height))
-                    res.ExpandToInclude(e);
-            }
-            return res;
-        }
-
-        private static Extent ToExtent(double[] xyOrdinates)
-        {
-            double minX = xyOrdinates[0], maxX = xyOrdinates[0];
-            double minY = xyOrdinates[1], maxY = xyOrdinates[1];
-
-            var i = 2;
-            while (i < xyOrdinates.Length)
-            {
-                if (minX > xyOrdinates[i]) minX = xyOrdinates[i];
-                if (maxX < xyOrdinates[i]) maxX = xyOrdinates[i];
-                i += 1;
-                if (minY > xyOrdinates[i]) minY = xyOrdinates[i];
-                if (maxY < xyOrdinates[i]) maxY = xyOrdinates[i];
-                i += 1;
-            }
-            return new Extent(minX, minY, maxX, maxY);
-        }
-
         private readonly object _drawLock = new object();
 
         /// <summary>
@@ -543,13 +502,27 @@ namespace DotSpatial.Plugins.BruTileLayer
             // If this layer is not marked visible, exit
             if (!IsVisible) return;
 
+            _stopwatch.Stop();
+
+            var region = regions.FirstOrDefault() ?? args.GeographicExtents;
 
             lock (_drawLock)
             {
+                LogManager.DefaultLogManager.LogMessage("MAP   : " + region, DialogResult.OK);
+
                 //We have a target projection, so project extent to providers extent
                 var geoExtent = _targetProjection == null
-                                    ? args.GeographicExtents
-                                    : ReprojectExtent(args.GeographicExtents, _targetProjection, _projectionInfo);
+                                    ? region
+                                    : region.Intersection(Extent).Reproject(_targetProjection, _projectionInfo);
+
+                LogManager.DefaultLogManager.LogMessage("SOURCE: " + geoExtent, DialogResult.OK);
+
+                if (geoExtent.IsEmpty())
+                {
+                    LogManager.DefaultLogManager.LogMessage("Skipping because extent is empty!", DialogResult.OK);
+                    _stopwatch.Restart(); 
+                    return; 
+                }
 
                 BruTile.Extent extent;
                 try
@@ -559,15 +532,22 @@ namespace DotSpatial.Plugins.BruTileLayer
                 catch (Exception ex)
                 {
                     LogManager.DefaultLogManager.Exception(ex);
+                    _stopwatch.Restart();
                     return;
                 }
-                if (double.IsNaN(extent.Area)) return;
+
+                if (double.IsNaN(extent.Area))
+                {
+                    LogManager.DefaultLogManager.LogMessage("Skipping because extent is empty!", DialogResult.OK);
+                    _stopwatch.Restart();
+                    return;
+                }
 
                 var pixelSize = extent.Width/args.ImageRectangle.Width;
 
                 var tileSource = _configuration.TileSource;
                 var schema = tileSource.Schema;
-                var level = Utilities.GetNearestLevel(schema.Resolutions, pixelSize);
+                var level = _level = Utilities.GetNearestLevel(schema.Resolutions, pixelSize);
                 
                 _tileFetcher.Clear();
                 var tiles = new List<TileInfo>(Sort(schema.GetTilesInView(extent, level), geoExtent.Center));
@@ -579,6 +559,7 @@ namespace DotSpatial.Plugins.BruTileLayer
 
                 // Set up Tile reprojector
                 var tr = new TileReprojector(args, _projectionInfo, _targetProjection);
+
 
                 var sw = new System.Diagnostics.Stopwatch();
                 sw.Start();
@@ -621,6 +602,9 @@ namespace DotSpatial.Plugins.BruTileLayer
                 LogManager.DefaultLogManager.LogMessage(string.Format("{0} ms", sw.ElapsedMilliseconds), DialogResult.OK);
                 //if (InvalidRegion != null)
                 //    Invalidate();
+
+                _stopwatch.Stop();
+
             }
         }
 

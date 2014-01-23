@@ -6,11 +6,11 @@ using DotSpatial.Plugins.BruTileLayer.Configuration;
 
 namespace DotSpatial.Plugins.BruTileLayer
 {
-    internal class BruTileLayerSettings
+    public class BruTileLayerSettings
     {
         private int _maximumNumberOfThreads;
 
-        internal BruTileLayerSettings()
+        public BruTileLayerSettings()
         {
             PermaCacheRoot = Path.GetTempPath();
             PermaCacheExpireInDays = 14;
@@ -20,7 +20,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             MemoryCacheMaximum = 200;
             
             BingMapsToken = string.Empty;
-            UseAsyncMode = false;
+            UseAsyncMode = true;
 
             MaximumNumberOfThreads = 4;
         }

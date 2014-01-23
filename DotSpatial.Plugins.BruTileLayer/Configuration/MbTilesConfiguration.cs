@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom;
 using System.ComponentModel.Composition;
+using System.Data.SQLite;
 using System.IO;
 using BruTile;
 using DotSpatial.Serialization;
@@ -18,7 +19,11 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             _mbTilesFile = mbtilesFile;
             LegendText = Path.GetFileNameWithoutExtension(_mbTilesFile);
 
-            TileSource = new MbTilesTileSource(_mbTilesFile);
+#if DEBUG
+            SQLiteLog.Enabled = true;
+#endif
+            var uri = new Uri(_mbTilesFile);
+            TileSource = new MbTilesTileSource(uri.LocalPath);
             TileFetcher = new TileFetcher(TileSource.Provider, 
                 BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                 BruTileLayerPlugin.Settings.MemoryCacheMaximum, 

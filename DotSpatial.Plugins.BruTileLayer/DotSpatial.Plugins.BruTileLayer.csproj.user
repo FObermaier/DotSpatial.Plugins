@@ -4,6 +4,7 @@
     <ProjectView>ProjectFiles</ProjectView>
   </PropertyGroup>
   <PropertyGroup>
-    <ReferencePath>D:\Development\Codeplex\dotSpatial\Debug\bin\</ReferencePath>
+    <ReferencePath>
+    </ReferencePath>
   </PropertyGroup>
 </Project>

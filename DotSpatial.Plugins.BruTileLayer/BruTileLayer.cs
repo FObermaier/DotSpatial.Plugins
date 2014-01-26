@@ -246,9 +246,10 @@ namespace DotSpatial.Plugins.BruTileLayer
 // some timed refreshes if the server becomes slooow...
             if (_stopwatch.Elapsed.Seconds > 1 && ! _tileFetcher.Ready())
             {
+                Console.Beep();
                 _stopwatch.Reset();
                 Invalidate();
-                _stopwatch.Reset();
+                _stopwatch.Restart();
                 return;
             }
 
@@ -261,7 +262,7 @@ namespace DotSpatial.Plugins.BruTileLayer
 
         private void HandleQueueEmpty(object sender, EventArgs empty)
         {
-            _stopwatch.Stop();
+            _stopwatch.Reset();
             Invalidate();
         }
 
@@ -502,7 +503,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             // If this layer is not marked visible, exit
             if (!IsVisible) return;
 
-            _stopwatch.Stop();
+            _stopwatch.Reset();
 
             var region = regions.FirstOrDefault() ?? args.GeographicExtents;
 
@@ -520,7 +521,6 @@ namespace DotSpatial.Plugins.BruTileLayer
                 if (geoExtent.IsEmpty())
                 {
                     LogManager.DefaultLogManager.LogMessage("Skipping because extent is empty!", DialogResult.OK);
-                    _stopwatch.Restart(); 
                     return; 
                 }
 
@@ -532,14 +532,12 @@ namespace DotSpatial.Plugins.BruTileLayer
                 catch (Exception ex)
                 {
                     LogManager.DefaultLogManager.Exception(ex);
-                    _stopwatch.Restart();
                     return;
                 }
 
                 if (double.IsNaN(extent.Area))
                 {
                     LogManager.DefaultLogManager.LogMessage("Skipping because extent is empty!", DialogResult.OK);
-                    _stopwatch.Restart();
                     return;
                 }
 
@@ -603,7 +601,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                 //if (InvalidRegion != null)
                 //    Invalidate();
 
-                _stopwatch.Stop();
+                _stopwatch.Restart();
 
             }
         }

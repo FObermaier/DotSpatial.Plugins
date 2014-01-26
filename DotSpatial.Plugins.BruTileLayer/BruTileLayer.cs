@@ -246,7 +246,6 @@ namespace DotSpatial.Plugins.BruTileLayer
 // some timed refreshes if the server becomes slooow...
             if (_stopwatch.Elapsed.Seconds > 1 && ! _tileFetcher.Ready())
             {
-                Console.Beep();
                 _stopwatch.Reset();
                 Invalidate();
                 _stopwatch.Restart();

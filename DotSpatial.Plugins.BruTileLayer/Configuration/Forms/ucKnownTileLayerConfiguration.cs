@@ -23,13 +23,12 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             cboKnownOsmMapTypes.SelectedIndex = 0;
         }
 
-        public string BruTileName { get { return "OpenStreetMap based Maps"; } }
+        public string BruTileName { get { return "Known tile layers"; } }
 
         public IConfiguration Create()
         {
             var bmt = (BruTile.Web.KnownTileServers)Enum.Parse(typeof(BruTile.Web.KnownTileServers), cboKnownOsmMapTypes.Text);
-            return new KnownTileLayerConfiguration(System.IO.Path.Combine(new BruTileLayerSettings().PermaCacheRoot,cboKnownOsmMapTypes.Text),
-                bmt, txtOsmMapTypeToken.Text);
+            return new KnownTileLayerConfiguration(null, bmt, txtOsmMapTypeToken.Text);
         }
 
         public void SaveSettings() {}

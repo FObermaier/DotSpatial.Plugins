@@ -310,49 +310,52 @@ namespace DotSpatial.Plugins.BruTileLayer
             try
             {
 
-            var schema = _configuration.TileSource.Schema;
-            var tiles = new List<TileInfo>(schema.GetTilesInView(schema.Extent, 0));
-            if (tiles.Count <= 4)
-            {
-                var resolution = schema.Resolutions.Values.First();;
+                var schema = _configuration.TileSource.Schema;
+                var resolution = schema.Resolutions.Values.First(); ;
+                var tiles = new List<TileInfo>(schema.GetTilesInView(schema.Extent, resolution.UnitsPerPixel));
 
-                //Ratio of width to height for each tile 
-                var ratio = (double)resolution.TileWidth / resolution.TileHeight;
-                var width = (int) Math.Round(height*ratio, MidpointRounding.ToEven);
-                var result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-                var tileHeight = tiles.Count == 4 ? height/2 : height;
-                var tileWidth = tiles.Count == 4 ? width/2 : width;
-                using (var g = Graphics.FromImage(result))
+                if (tiles.Count <= 4)
                 {
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    
-                    var ia = new ImageAttributes();
-                    ia.SetWrapMode(WrapMode.TileFlipXY);
+                    var tmpTileWidth = resolution.TileWidth > 0 ? resolution.TileWidth : 256;
+                    var tmpTileHeight = resolution.TileWidth > 0 ? resolution.TileWidth : 256;
 
-                    foreach (var ti in tiles)
+                    //Ratio of width to height for each tile 
+                    var ratio = (double)tmpTileWidth / tmpTileHeight;
+                    var width = (int)Math.Round(height * ratio, MidpointRounding.ToEven);
+                    var result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                    var tileHeight = tiles.Count == 4 ? height / 2 : height;
+                    var tileWidth = tiles.Count == 4 ? width / 2 : width;
+                    using (var g = Graphics.FromImage(result))
                     {
-                        var image = GetTileImage(ti);
-                        switch (schema.Axis)
+                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
+                        var ia = new ImageAttributes();
+                        ia.SetWrapMode(WrapMode.TileFlipXY);
+
+                        foreach (var ti in tiles)
                         {
-                            case AxisDirection.InvertedY:
-                                g.DrawImage(image, ti.Index.Col*tileWidth, ti.Index.Row*tileHeight, tileWidth,
-                                            tileHeight);
-                                break;
-                            case AxisDirection.Normal:
-                                g.DrawImage(image, ti.Index.Col*tileWidth, height - (ti.Index.Row+1)*tileHeight, tileWidth,
-                                            tileHeight);
-                                break;
+                            var image = GetTileImage(ti);
+                            switch (schema.Axis)
+                            {
+                                case AxisDirection.InvertedY:
+                                    g.DrawImage(image, ti.Index.Col * tileWidth, ti.Index.Row * tileHeight, tileWidth,
+                                                tileHeight);
+                                    break;
+                                case AxisDirection.Normal:
+                                    g.DrawImage(image, ti.Index.Col * tileWidth, height - (ti.Index.Row + 1) * tileHeight, tileWidth,
+                                                tileHeight);
+                                    break;
 
+                            }
                         }
+
+                        ia.Dispose();
                     }
-
-                    ia.Dispose();
+                    return result;
                 }
-                return result;
-            }
 
             }
-// ReSharper disable once EmptyGeneralCatchClause
+            // ReSharper disable once EmptyGeneralCatchClause
             catch { }
 
             return new Bitmap(Resources.BruTileLogoSmall);

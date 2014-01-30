@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.Composition;
+using System.IO;
 using BruTile;
 using BruTile.Cache;
 using BruTile.Web;
@@ -20,7 +21,8 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         private readonly TileFetcher _tileFetcher;
 
         public KnownTileLayerConfiguration(string fileCacheRoot, KnownTileServers tileServers, string apiKey) 
-            : base(BruTileLayerPlugin.Settings.PermaCacheType, fileCacheRoot)
+            : base(BruTileLayerPlugin.Settings.PermaCacheType, 
+                   fileCacheRoot ?? Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot , tileServers.ToString()))
         {
             _knownTileServers = tileServers;
             _apiKey = apiKey;

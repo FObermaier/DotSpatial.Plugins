@@ -280,8 +280,8 @@ namespace DotSpatial.Plugins.BruTileLayer
                     if (!_activeTileRequests.TryRemove(request.Key, out one))
                         _activeTileRequests.TryRemove(request.Key, out one);
                 }
-                _openTileRequests.Clear();
             }
+            _openTileRequests.Clear();
         }
     }
 }

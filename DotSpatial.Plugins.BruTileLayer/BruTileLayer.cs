@@ -216,7 +216,10 @@ namespace DotSpatial.Plugins.BruTileLayer
             _projectionInfo = AuthorityCodeHandler.Instance[tileSource.Schema.Srs];
             if (_projectionInfo == null)
                 _projectionInfo = AuthorityCodeHandler.Instance["EPSG:3857"];
-
+            
+            // this is totally weird but it fixes projection problems with OSM Mapnik ;-)
+            if (tileSource.Schema.Srs == "EPSG:3857") _projectionInfo = ProjectionInfo.FromEsriString(KnownCoordinateSystems.Projected.World.WebMercator.ToEsriString());
+            
             Projection = _projection;
             var extent = tileSource.Schema.Extent;
             MyExtent = new Extent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);

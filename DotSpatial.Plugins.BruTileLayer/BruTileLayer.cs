@@ -216,7 +216,10 @@ namespace DotSpatial.Plugins.BruTileLayer
             _projectionInfo = AuthorityCodeHandler.Instance[tileSource.Schema.Srs];
             if (_projectionInfo == null)
                 _projectionInfo = AuthorityCodeHandler.Instance["EPSG:3857"];
-
+            
+            // WebMercator: set datum to WGS1984 for better accuracy 
+            if (tileSource.Schema.Srs == "EPSG:3857") _projectionInfo.GeographicInfo.Datum = KnownCoordinateSystems.Geographic.World.WGS1984.GeographicInfo.Datum;
+            
             Projection = _projection;
             var extent = tileSource.Schema.Extent;
             MyExtent = new Extent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);

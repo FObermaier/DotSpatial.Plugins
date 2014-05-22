@@ -42,6 +42,10 @@ namespace TestApp
                     KnownCoordinateSystems.Projected.World.Polyconicworld,
                     ProjectionInfo.FromEpsgCode(28992)
                 };
+
+                var t = KnownCoordinateSystems.Projected.World.WebMercator;
+                Console.WriteLine(t.ToProj4String());
+                Console.WriteLine(AuthorityCodeHandler.Instance["EPSG:3857"].ToProj4String());
                 
                 map.MouseClick += map_MouseClick;
             }

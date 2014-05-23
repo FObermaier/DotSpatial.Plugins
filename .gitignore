@@ -1,5 +1,7 @@
 /*.suo
 /*.DotSettings
+/*.user
+*/*.user
 /packages/*
 bin/*
 obj/*

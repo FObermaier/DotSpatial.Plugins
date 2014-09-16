@@ -2,7 +2,9 @@
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
+using DotSpatial.Controls;
 using DotSpatial.Controls.Header;
 
 namespace TestApp
@@ -33,6 +35,7 @@ namespace TestApp
             //adding one initial status panel to the status strip control
             defaultStatusPanel = new StatusPanel();
             this.Add(defaultStatusPanel);
+            
         }
 
         #endregion
@@ -55,6 +58,7 @@ namespace TestApp
             panel.PropertyChanged += delegate(object sender, PropertyChangedEventArgs e)
             {
                 var item = sender as StatusPanel;
+                if (item == null) return;
 
                 myLabel.Text = item.Caption;
                 myLabel.Width = item.Width;

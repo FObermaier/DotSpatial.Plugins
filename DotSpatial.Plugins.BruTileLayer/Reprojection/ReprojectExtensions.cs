@@ -100,37 +100,25 @@ namespace DotSpatial.Plugins.BruTileLayer.Reprojection
 
         static double[] ToSequence(Extent extent)
         {
-            const int intervals = 36;
-            var res = new double[intervals * 4 * 2];
+            const int horizontal = 36;
+            const int vertical = 18;
+            var res = new double[horizontal * vertical * 2];
 
-            var dx = extent.Width / intervals;
-            var dy = extent.Height / intervals;
+            var dx = extent.Width / (horizontal-1);
+            var dy = extent.Height / (vertical-1);
 
-            res[0] = extent.MinX;
-            res[1] = extent.MinY;
-
-            for (var i = 0; i < 2 * intervals; )
+            var minY = extent.MinY;
+            var k = 0;
+            for (var i = 0; i < vertical; i++)
             {
-                res[i + 2] = res[i++] + dx;
-                res[i + 2] = res[i++];
-            }
-
-            for (var i = 2 * intervals; i < 4 * intervals; )
-            {
-                res[i + 2] = res[i++];
-                res[i + 2] = res[i++] + dy;
-            }
-
-            for (var i = 4 * intervals; i < 6 * intervals; )
-            {
-                res[i + 2] = res[i++] - dx;
-                res[i + 2] = res[i++];
-            }
-
-            for (var i = 6 * intervals; i < 8 * intervals - 2; )
-            {
-                res[i + 2] = res[i++];
-                res[i + 2] = res[i++] - dy;
+                var minX = extent.MinX;
+                for (var j = 0; j < horizontal; j++)
+                {
+                    res[k++] = minX;
+                    res[k++] = minY;
+                    minX += dx;
+                }
+                minY += dy;
             }
 
             return res;

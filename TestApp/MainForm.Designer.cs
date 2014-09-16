@@ -1,5 +1,6 @@
-﻿using DotSpatial.Controls;
-
+﻿using System.Windows.Forms;
+using DotSpatial.Controls;
+using cctrl = ConsoleControl.ConsoleControl;
 namespace TestApp
 {
     partial class MainForm
@@ -33,30 +34,57 @@ namespace TestApp
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.appManager = new DotSpatial.Controls.AppManager();
+            this.legend = new DotSpatial.Controls.Legend();
             this.ttHelp = new System.Windows.Forms.ToolTip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.splitHorizontal = new System.Windows.Forms.SplitContainer();
             this.map = new DotSpatial.Controls.Map();
-            this.legend = new DotSpatial.Controls.Legend();
+            this.consoleControl1 = new ConsoleControl.ConsoleControl();
+            this.msTest = new System.Windows.Forms.MenuStrip();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitHorizontal)).BeginInit();
+            this.splitHorizontal.Panel1.SuspendLayout();
+            this.splitHorizontal.Panel2.SuspendLayout();
+            this.splitHorizontal.SuspendLayout();
             this.SuspendLayout();
             // 
             // appManager
             // 
-            this.appManager.CompositionContainer = null;
             this.appManager.Directories = ((System.Collections.Generic.List<string>)(resources.GetObject("appManager.Directories")));
             this.appManager.DockManager = null;
             this.appManager.HeaderControl = null;
-            this.appManager.Map = this.map;
             this.appManager.Legend = this.legend;
+            this.appManager.Map = null;
             this.appManager.ProgressHandler = null;
-            this.appManager.ShowExtensionsDialog = DotSpatial.Controls.ShowExtensionsDialog.Default;
+            this.appManager.ShowExtensionsDialogMode = DotSpatial.Controls.ShowExtensionsDialogMode.Default;
+            // 
+            // legend
+            // 
+            this.legend.BackColor = System.Drawing.Color.White;
+            this.legend.ControlRectangle = new System.Drawing.Rectangle(0, 0, 203, 332);
+            this.legend.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.legend.DocumentRectangle = new System.Drawing.Rectangle(0, 0, 187, 428);
+            this.legend.HorizontalScrollEnabled = true;
+            this.legend.Indentation = 30;
+            this.legend.IsInitialized = false;
+            this.legend.Location = new System.Drawing.Point(0, 0);
+            this.legend.MinimumSize = new System.Drawing.Size(5, 5);
+            this.legend.Name = "legend";
+            this.legend.ProgressHandler = null;
+            this.legend.ResetOnResize = false;
+            this.legend.SelectionFontColor = System.Drawing.Color.Black;
+            this.legend.SelectionHighlight = System.Drawing.Color.FromArgb(((int)(((byte)(215)))), ((int)(((byte)(238)))), ((int)(((byte)(252)))));
+            this.legend.Size = new System.Drawing.Size(203, 332);
+            this.legend.TabIndex = 0;
+            this.legend.VerticalScrollEnabled = true;
             // 
             // splitContainer1
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer1.Location = new System.Drawing.Point(0, 24);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -65,10 +93,28 @@ namespace TestApp
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.map);
-            this.splitContainer1.Size = new System.Drawing.Size(611, 356);
+            this.splitContainer1.Panel2.Controls.Add(this.splitHorizontal);
+            this.splitContainer1.Size = new System.Drawing.Size(611, 332);
             this.splitContainer1.SplitterDistance = 203;
             this.splitContainer1.TabIndex = 1;
+            // 
+            // splitHorizontal
+            // 
+            this.splitHorizontal.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitHorizontal.Location = new System.Drawing.Point(0, 0);
+            this.splitHorizontal.Name = "splitHorizontal";
+            this.splitHorizontal.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitHorizontal.Panel1
+            // 
+            this.splitHorizontal.Panel1.Controls.Add(this.map);
+            // 
+            // splitHorizontal.Panel2
+            // 
+            this.splitHorizontal.Panel2.Controls.Add(this.consoleControl1);
+            this.splitHorizontal.Size = new System.Drawing.Size(404, 332);
+            this.splitHorizontal.SplitterDistance = 236;
+            this.splitHorizontal.TabIndex = 2;
             // 
             // map
             // 
@@ -89,28 +135,28 @@ namespace TestApp
             this.map.ProjectionModeReproject = DotSpatial.Controls.ActionMode.PromptOnce;
             this.map.RedrawLayersWhileResizing = false;
             this.map.SelectionEnabled = true;
-            this.map.Size = new System.Drawing.Size(404, 356);
-            this.map.TabIndex = 1;
+            this.map.Size = new System.Drawing.Size(404, 236);
+            this.map.TabIndex = 2;
             // 
-            // legend
+            // consoleControl1
             // 
-            this.legend.BackColor = System.Drawing.Color.White;
-            this.legend.ControlRectangle = new System.Drawing.Rectangle(0, 0, 210, 311);
-            this.legend.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.legend.DocumentRectangle = new System.Drawing.Rectangle(0, 0, 187, 428);
-            this.legend.HorizontalScrollEnabled = true;
-            this.legend.Indentation = 30;
-            this.legend.IsInitialized = false;
-            this.legend.Location = new System.Drawing.Point(0, 0);
-            this.legend.MinimumSize = new System.Drawing.Size(5, 5);
-            this.legend.Name = "legend";
-            this.legend.ProgressHandler = null;
-            this.legend.ResetOnResize = false;
-            this.legend.SelectionFontColor = System.Drawing.Color.Black;
-            this.legend.SelectionHighlight = System.Drawing.Color.FromArgb(((int)(((byte)(215)))), ((int)(((byte)(238)))), ((int)(((byte)(252)))));
-            this.legend.Size = new System.Drawing.Size(210, 311);
-            this.legend.TabIndex = 0;
-            this.legend.VerticalScrollEnabled = true;
+            this.consoleControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.consoleControl1.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.consoleControl1.IsInputEnabled = true;
+            this.consoleControl1.Location = new System.Drawing.Point(0, 0);
+            this.consoleControl1.Name = "consoleControl1";
+            this.consoleControl1.SendKeyboardCommandsToProcess = false;
+            this.consoleControl1.ShowDiagnostics = false;
+            this.consoleControl1.Size = new System.Drawing.Size(404, 92);
+            this.consoleControl1.TabIndex = 0;
+            // 
+            // msTest
+            // 
+            this.msTest.Location = new System.Drawing.Point(0, 0);
+            this.msTest.Name = "msTest";
+            this.msTest.Size = new System.Drawing.Size(611, 24);
+            this.msTest.TabIndex = 2;
+            this.msTest.Text = "menuStrip1";
             // 
             // MainForm
             // 
@@ -118,12 +164,20 @@ namespace TestApp
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(611, 356);
             this.Controls.Add(this.splitContainer1);
+            this.Controls.Add(this.msTest);
+            this.MainMenuStrip = this.msTest;
             this.Name = "MainForm";
             this.Text = "DotSpatial.Plugins.TestApp";
+            this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.splitHorizontal.Panel1.ResumeLayout(false);
+            this.splitHorizontal.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitHorizontal)).EndInit();
+            this.splitHorizontal.ResumeLayout(false);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -132,8 +186,11 @@ namespace TestApp
         private AppManager appManager;
         private System.Windows.Forms.ToolTip ttHelp;
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private DotSpatial.Controls.Map map;
         private DotSpatial.Controls.Legend legend;
+        private System.Windows.Forms.SplitContainer splitHorizontal;
+        private Map map;
+        private cctrl consoleControl1;
+        private MenuStrip msTest;
     }
 }
 

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Drawing;
 using System.Windows.Forms;
 using DotSpatial.Controls;
+using DotSpatial.Controls.Header;
 using DotSpatial.Data;
 using DotSpatial.Data.Forms;
 using DotSpatial.Projections;
@@ -22,9 +24,18 @@ namespace TestApp
         {
             InitializeComponent();
             
-            LogManager.DefaultLogManager.AddLogger(new TestLogger());
+            LogManager.DefaultLogManager.AddLogger(new TestLogger(consoleControl1));
 
             _shell = this;
+            appManager.Map = map;
+            
+            appManager.DockManager = new SpatialDockManager();
+            var hc = new MenuBarHeaderControl();
+            hc.Initialize(new ToolStripPanel(), msTest);
+            appManager.HeaderControl = hc;
+            var sss = new SpatialStatusStrip();
+            
+            appManager.ProgressHandler = sss;
 
             try
             {
@@ -33,20 +44,15 @@ namespace TestApp
             finally
             {
                 map.FunctionMode = FunctionMode.Pan;
-                map.Projection = KnownCoordinateSystems.Projected.World.Polyconicworld;
                 _infos = new ProjectionInfo[]
                 {
+                    KnownCoordinateSystems.Projected.World.WebMercator,
                     KnownCoordinateSystems.Projected.Europe.EuropeLambertConformalConic,
                     KnownCoordinateSystems.Projected.World.Sinusoidalworld,
-                    AuthorityCodeHandler.Instance["EPSG:3857"],
                     KnownCoordinateSystems.Projected.World.Polyconicworld,
                     ProjectionInfo.FromEpsgCode(28992)
                 };
-
-                var t = KnownCoordinateSystems.Projected.World.WebMercator;
-                Console.WriteLine(t.ToProj4String());
-                Console.WriteLine(AuthorityCodeHandler.Instance["EPSG:3857"].ToProj4String());
-                
+                map.Projection = _infos[0];
                 map.MouseClick += map_MouseClick;
             }
         }
@@ -70,7 +76,7 @@ namespace TestApp
         }
 
         private readonly ProjectionInfo[] _infos;
-        private int _index = 0;
+        private int _index;
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
@@ -92,39 +98,53 @@ namespace TestApp
 
         private class TestLogger : ILogger
         {
+            private readonly ConsoleControl.ConsoleControl _ctrl;
+
+            public TestLogger(ConsoleControl.ConsoleControl consoleControl)
+            {
+                _ctrl = consoleControl;
+            }
+
             public void Progress(string key, int percent, string message)
             {
+                _ctrl.WriteOutput(".", DefaultForeColor);
             }
 
             public void Exception(Exception ex)
             {
-                Console.WriteLine(ex);
+                _ctrl.WriteOutput("\n"+ex.Message, Color.Red);
+                _ctrl.WriteOutput(ex.StackTrace, Color.Red);
                 throw ex;
             }
 
             public void PublicMethodEntered(string methodName, IEnumerable<string> parameters)
             {
+                _ctrl.WriteOutput(string .Format("Method '{0}' entered\n"), DefaultForeColor);
             }
 
             public void PublicMethodLeft(string methodName)
             {
+                _ctrl.WriteOutput(string.Format("Method '{0}' left\n"), DefaultForeColor);
             }
 
             public void Status(string message)
             {
+                _ctrl.WriteOutput(message, Color.Orange);
             }
 
             public void MessageBoxShown(string messageText, DialogResult result)
             {
-                Console.WriteLine(messageText);
+                _ctrl.WriteOutput(messageText + "\n", Color.Gold);
             }
 
             public void InputBoxShown(string messageText, DialogResult result, string value)
             {
             }
 
-            public string Description { get; private set; }
-            public int Key { get; set; }
+            public string Description { get { return "TestAppLogger"; } }
+            public int Key
+            {
+                get; set; }
         }
     }
 }

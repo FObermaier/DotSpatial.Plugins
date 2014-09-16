@@ -338,6 +338,8 @@ namespace DotSpatial.Plugins.BruTileLayer
                         foreach (var ti in tiles)
                         {
                             var image = GetTileImage(ti);
+                            if (image == null) continue;
+
                             switch (schema.Axis)
                             {
                                 case AxisDirection.InvertedY:
@@ -368,7 +370,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         private Image GetTileImage(TileInfo tileInfo)
         {
             var buffer = _configuration.TileSource.Provider.GetTile(tileInfo);
-            return Image.FromStream(new MemoryStream(buffer));
+            return buffer != null ? Image.FromStream(new MemoryStream(buffer)) : null;
         }
 
         /// <summary>
@@ -512,11 +514,12 @@ namespace DotSpatial.Plugins.BruTileLayer
 
             var region = regions.FirstOrDefault() ?? args.GeographicExtents;
 
-            lock (_drawLock)
-            {
+            if (!Monitor.TryEnter(_drawLock))
+                return;
+            
                 LogManager.DefaultLogManager.LogMessage("MAP   : " + region, DialogResult.OK);
 
-                //We have a target projection, so project extent to providers extent
+                // If we have a target projection, so project extent to providers extent
                 var geoExtent = _targetProjection == null
                                     ? region
                                     : region.Intersection(Extent).Reproject(_targetProjection, _projectionInfo);
@@ -526,6 +529,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                 if (geoExtent.IsEmpty())
                 {
                     LogManager.DefaultLogManager.LogMessage("Skipping because extent is empty!", DialogResult.OK);
+                    Monitor.Exit(_drawLock);
                     return; 
                 }
 
@@ -537,12 +541,14 @@ namespace DotSpatial.Plugins.BruTileLayer
                 catch (Exception ex)
                 {
                     LogManager.DefaultLogManager.Exception(ex);
+                    Monitor.Exit(_drawLock);
                     return;
                 }
 
                 if (double.IsNaN(extent.Area))
                 {
                     LogManager.DefaultLogManager.LogMessage("Skipping because extent is empty!", DialogResult.OK);
+                    Monitor.Exit(_drawLock);
                     return;
                 }
 
@@ -606,9 +612,8 @@ namespace DotSpatial.Plugins.BruTileLayer
                 //if (InvalidRegion != null)
                 //    Invalidate();
 
-                _stopwatch.Restart();
-
-            }
+                //_stopwatch.Restart();
+                Monitor.Exit(_drawLock);
         }
 
         private static IEnumerable<TileInfo> Sort(IEnumerable<TileInfo> enumerable, Coordinate coordinate)

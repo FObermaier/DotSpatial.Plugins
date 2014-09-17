@@ -53,15 +53,15 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         }
  
 
-        public WmtsLayerConfiguration(string fileCacheRoot, string name, Uri capabilitiesUri)
+        public WmtsLayerConfiguration(string fileCacheRoot, string name, ITileSource tileSource)
             :base(BruTileLayerPlugin.Settings.PermaCacheType, fileCacheRoot)
         {
             _fileCacheRoot = fileCacheRoot;
 
             LegendText = name;
 
-            var tileSources = GetTileSources(capabilitiesUri);
-            var tileSource = tileSources.FirstOrDefault(ts => ts.Title.Equals(name, StringComparison.InvariantCulture));
+            //var tileSources = GetTileSources(capabilitiesUri);
+            //var tileSource = tileSources.FirstOrDefault(ts => ts.Title.Equals(name, StringComparison.InvariantCulture));
             if (tileSource == null)
                 throw new ArgumentException("TileSource not found", "capabilitiesUri");
 

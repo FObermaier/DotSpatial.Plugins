@@ -1,18 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
 using System.Xml.Linq;
-using System.Xml.XPath;
 using BruTile;
-using BruTile.Web;
 using BruTile.Wmts;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
@@ -24,7 +16,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             InitializeComponent();
         }
 
-        public string BruTileName { get { return "Web Map Tile Service"; } }
+        public string BruTileName { get { return "Web Map Tile Service (WMTS)"; } }
 
         protected override void OnLoad(EventArgs e)
         {
@@ -45,8 +37,8 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
                     var line = streamReader.ReadLine();
                     if (string.IsNullOrEmpty(line)) continue;
                     if (line.Length < 7) continue;
-                    if (!line.StartsWith("http")) continue;
-                    cboWmts.Items.Add(line);
+                    if (line.StartsWith("#")) continue;
+                    cboWmts.Items.Add(WmsConnectionInfo.Parse(line));
                 }
             }
             if (cboWmts.Items.Count > 0)
@@ -61,97 +53,103 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             using (var streamWriter = new StreamWriter(File.OpenWrite(settings)))
             {
                 streamWriter.WriteLine("# Web Map Tile Service Urls");
-                var selectedItem = cboWmts.Text;
-                if (!string.IsNullOrEmpty(selectedItem)) streamWriter.WriteLine(selectedItem);
+                var selectedItem = cboWmts.SelectedItem;
+                if (selectedItem != null) streamWriter.WriteLine(((WmsConnectionInfo)selectedItem).ToConnectionInfoLine());
 
                 foreach (var item in cboWmts.Items)
                 {
-                    var url = item.ToString();
-                    if (url != selectedItem)
-                        streamWriter.WriteLine(url);
+                    if (item != selectedItem)
+                        streamWriter.WriteLine(((WmsConnectionInfo)item).ToConnectionInfoLine());
                 }
             }
         }
 
         public IConfiguration Create()
         {
-            if (tvwWmtsLayers.SelectedNode == null)
+            if (lvwWmtsLayers.SelectedItems.Count == 0)
                 return null;
 
-            var tileSource = (Uri) tvwWmtsLayers.SelectedNode.Tag;
-            var host = tileSource.Host.Replace(".", "_");
-            return new WmtsLayerConfiguration(System.IO.Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot, "Wmts", host, tvwWmtsLayers.SelectedNode.Text),
-                tvwWmtsLayers.SelectedNode.Text, tileSource);
+            var tmp = lvwWmtsLayers.SelectedItems[0].Tag;
+            var tileSource = (WmtsTileSource) tmp;
+            var tileSchema = (WmtsTileSchema) tileSource.Schema;
+            var host = cboWmts.Text;
+            var format = tileSource.Format.Split('/')[1];
+            var layerStyle = tileSource.Layer;
+            if (!string.IsNullOrEmpty(tileSource.Style)) layerStyle += "_" + tileSource.Style;
+            return new WmtsLayerConfiguration(Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot, "Wmts", host, layerStyle, format),
+                tileSchema.Name, tileSource);
 
         }
 
         private void cboWmts_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cboWmts.SelectedIndex == -1)
-                return;
+            //if (cboWmts.SelectedIndex == -1)
+            //    return;
 
-            var uri = new Uri(cboWmts.Text);
-            var tileSources = WmtsLayerConfiguration.GetTileSources(new Uri(cboWmts.Text));
-            if (tileSources == null)
-            {
-                if (MessageBox.Show("No tile sources found for the specified URL. Shall URL be removed?", 
-                    "Get tile sources failed", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                    cboWmts.Items.RemoveAt(cboWmts.SelectedIndex);
-                return;
-            }
+            //var uri = new Uri(cboWmts.Text);
+            //var tileSources = WmtsLayerConfiguration.GetTileSources(new Uri(cboWmts.Text));
+            //if (tileSources == null)
+            //{
+            //    if (MessageBox.Show("No tile sources found for the specified URL. Shall URL be removed?", 
+            //        "Get tile sources failed", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            //        cboWmts.Items.RemoveAt(cboWmts.SelectedIndex);
+            //    return;
+            //}
 
-            FillTree(uri, tileSources);
+            //FillTree(uri, tileSources);
         }
 
-        private void FillTree(Uri uri, IEnumerable<ITileSource> tileSources)
+        private void FillTree(WmsConnectionInfo connectionInfo)
         {
-            tvwWmtsLayers.Nodes.Clear();
-            /* //Trying to get more information about layers to display
+            
+            lvwWmtsLayers.Items.Clear();
+            
+            //Trying to get more information about layers to display
+
             XDocument doc;
-            var req = WebRequest.Create(uri);
+            var req = (HttpWebRequest)WebRequest.Create(connectionInfo.Url);
+            if (!string.IsNullOrEmpty(connectionInfo.Username) )
+                req.Credentials = new NetworkCredential(connectionInfo.Username, connectionInfo.Password);
+
+            if (!string.IsNullOrEmpty(connectionInfo.Referrer))
+                req.Referer = connectionInfo.Referrer;
+
+            var tileSources = new List<ITileSource>();
             using (var resp = req.GetResponse())
             {
                 using (var s = resp.GetResponseStream())
                 {
-                    doc = XDocument.Load(s);
+                    tileSources.AddRange(WmtsParser.Parse(s));
                 }
             }
 
-            foreach (var xElement in doc.Root.Descendants(XName.Get("Layer", "http://www.opengis.net/wmts/1.0")))
+            foreach (WmtsTileSource tileSource in tileSources)
             {
-               // xEleme
-            }
-            */
-            foreach (var tileSource in tileSources)
-            {
-                var n = tvwWmtsLayers.Nodes.Add(tileSource.Title);
-                n.Tag = uri;
+                var tmp = (WmtsTileSchema) tileSource.Schema;
+                
+                var n = lvwWmtsLayers.Items.Add(tileSource.Layer);
+                n.SubItems.Add(tileSource.Format);
+                n.SubItems.Add(tileSource.Style);
+                n.SubItems.Add(tileSource.Title);
+                n.SubItems.Add(tileSource.Abstract);
+                n.SubItems.Add(tileSource.TileSet);
+                n.SubItems.Add(tmp.Srs);
+                n.Tag = tileSource;
             }
         }
 
         private void cboWmts_KeyDown(object sender, KeyEventArgs e)
         {
-            Uri uri;
-            if (!Uri.TryCreate(cboWmts.Text, UriKind.Absolute, out uri))
-                return;
+            //Uri uri;
+            //if (!Uri.TryCreate(cboWmts.Text, UriKind.Absolute, out uri))
+            //    return;
 
-            var tileSources = WmtsLayerConfiguration.GetTileSources(uri);
-            if (tileSources != null)
-            {
-                cboWmts.Items.Add(uri.ToString());
-                FillTree(uri, tileSources);
-            }
-        }
-
-        private void cboWmts_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
-        {
-            if (string.IsNullOrEmpty(cboWmts.Text))
-                return;
-
-            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Return)
-            {
-                e.IsInputKey = true;
-            }
+            //var tileSources = WmtsLayerConfiguration.GetTileSources(uri);
+            //if (tileSources != null)
+            //{
+            //    cboWmts.Items.Add(uri.ToString());
+            //    FillTree(uri, tileSources);
+            //}
         }
 
         public void SaveSettings()
@@ -159,5 +157,18 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
             WriteSettings();
         }
 
+        private void btnConnect_Click(object sender, EventArgs e)
+        {
+            if (cboWmts.SelectedIndex < 0)
+            {
+                MessageBox.Show("You need to define/select a Wm(t)s connection first", "Can't conntect",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var wmsConnectionInfo = (WmsConnectionInfo) cboWmts.SelectedItem;
+            FillTree(wmsConnectionInfo);
+
+        }
     }
 }

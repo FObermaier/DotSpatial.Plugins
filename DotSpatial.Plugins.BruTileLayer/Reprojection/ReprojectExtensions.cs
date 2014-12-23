@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using DotSpatial.Data;
 using DotSpatial.Projections;
 using DotSpatial.Topology;
@@ -42,7 +41,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Reprojection
 
         public static ILinearRing Reproject(this ILinearRing ring, ProjectionInfo source, ProjectionInfo target)
         {
-            var seq = Reproject(ring.Coordinates.Densify(4), source, target);
+            var seq = Reproject(ring.Coordinates.Densify(36), source, target);
             return ring.Factory.CreateLinearRing(seq);
         }
 
@@ -100,8 +99,8 @@ namespace DotSpatial.Plugins.BruTileLayer.Reprojection
 
         static double[] ToSequence(Extent extent)
         {
-            const int horizontal = 36;
-            const int vertical = 18;
+            const int horizontal = 72;
+            const int vertical = 36;
             var res = new double[horizontal * vertical * 2];
 
             var dx = extent.Width / (horizontal-1);
@@ -121,32 +120,6 @@ namespace DotSpatial.Plugins.BruTileLayer.Reprojection
                 minY += dy;
             }
 
-            return res;
-        }
-
-        private static Extent ReprojectQuad(Extent extent, ProjectionInfo source, ProjectionInfo target, int depth = 0)
-        {
-            if (depth > 4) return new Extent();
-            var width = extent.Width / 2;
-            var height = extent.Height / 2;
-
-            var quad = new[]
-            {
-                new Extent(extent.MinX, extent.MinY + height, extent.MinX +width, extent.MaxY), 
-                new Extent(extent.MinX + width, extent.MinY + height, extent.MaxX, extent.MaxY), 
-                new Extent(extent.MinX, extent.MinY, extent.MinX + width, extent.MinY + height), 
-                new Extent(extent.MinX + width, extent.MinY, extent.MaxX, extent.MinY + height) 
-            };
-
-            var res = new Extent();
-            for (var i = 0; i < 4; i++)
-            {
-                var e = quad[i].Reproject( source, target, depth + 1);
-                if (!e.IsEmpty() && !double.IsInfinity(e.Width) && !double.IsInfinity(e.Height))
-                    res.ExpandToInclude(e);
-                //else
-                //    res = ReprojectQuad(quad[i], source, target, depth + 1);
-            }
             return res;
         }
 

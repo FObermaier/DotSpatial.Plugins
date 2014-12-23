@@ -70,14 +70,21 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
                 return null;
 
             var tmp = lvwWmtsLayers.SelectedItems[0].Tag;
-            var tileSource = (WmtsTileSource) tmp;
+            var tileSource = (ITileSource) tmp;
             var tileSchema = (WmtsTileSchema) tileSource.Schema;
             var host = cboWmts.Text;
-            var format = tileSource.Format.Split('/')[1];
-            var layerStyle = tileSource.Layer;
-            if (!string.IsNullOrEmpty(tileSource.Style)) layerStyle += "_" + tileSource.Style;
-            return new WmtsLayerConfiguration(Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot, "Wmts", host, layerStyle, format),
-                tileSchema.Name, tileSource);
+            var format = tileSchema.Format.Split('/')[1];
+            var layerStyle = tileSchema.Identifier;
+            if (!string.IsNullOrEmpty(tileSchema.Style)) layerStyle += "_" + tileSchema.Style;
+
+            
+            foreach (var c in Path.GetInvalidFileNameChars())
+                host = host.Replace(c, '$');
+            foreach (var c in Path.GetInvalidFileNameChars())
+                layerStyle = layerStyle.Replace(c, '$');
+
+            var path = Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot, "Wmts", host, layerStyle, format);
+            return new WmtsLayerConfiguration(path, tileSource.Name, tileSource);
 
         }
 
@@ -123,17 +130,19 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
                 }
             }
 
-            foreach (WmtsTileSource tileSource in tileSources)
+            foreach (var tileSource in tileSources)
             {
-                var tmp = (WmtsTileSchema) tileSource.Schema;
+                var tmp = (WmtsTileSchema)tileSource.Schema;
+
+                var n = lvwWmtsLayers.Items.Add(tmp.Identifier);
                 
-                var n = lvwWmtsLayers.Items.Add(tileSource.Layer);
-                n.SubItems.Add(tileSource.Format);
-                n.SubItems.Add(tileSource.Style);
-                n.SubItems.Add(tileSource.Title);
-                n.SubItems.Add(tileSource.Abstract);
-                n.SubItems.Add(tileSource.TileSet);
+                n.SubItems.Add(tmp.Format);
+                n.SubItems.Add(tmp.Style);
+                n.SubItems.Add(tileSource.Name);
+                n.SubItems.Add(tmp.Abstract);
+                n.SubItems.Add(tmp.Name);
                 n.SubItems.Add(tmp.Srs);
+
                 n.Tag = tileSource;
             }
         }

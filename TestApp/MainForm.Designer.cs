@@ -137,6 +137,7 @@ namespace TestApp
             this.map.SelectionEnabled = true;
             this.map.Size = new System.Drawing.Size(404, 236);
             this.map.TabIndex = 2;
+            this.map.Paint += new System.Windows.Forms.PaintEventHandler(this.map_Paint);
             // 
             // consoleControl1
             // 
@@ -149,6 +150,7 @@ namespace TestApp
             this.consoleControl1.ShowDiagnostics = false;
             this.consoleControl1.Size = new System.Drawing.Size(404, 92);
             this.consoleControl1.TabIndex = 0;
+            this.consoleControl1.OnConsoleOutput += new ConsoleControl.ConsoleEventHanlder(this.consoleControl1_OnConsoleOutput);
             // 
             // msTest
             // 

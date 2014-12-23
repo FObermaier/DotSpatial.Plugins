@@ -94,6 +94,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                     ? new object[] {tileInfo}
                     : new object[] {tileInfo, are ?? new AutoResetEvent(false)});
             }
+            
             return null;
         }
 

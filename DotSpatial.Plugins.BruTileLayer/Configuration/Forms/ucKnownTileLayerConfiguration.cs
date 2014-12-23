@@ -15,7 +15,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
         {
             base.OnLoad(e);
 
-            foreach (var bmt in Enum.GetNames(typeof (BruTile.Web.KnownTileServers)))
+            foreach (var bmt in Enum.GetNames(typeof (BruTile.Predefined.KnownTileSource)))
             {
                 if (bmt == "Custom") continue;
                 cboKnownOsmMapTypes.Items.Add(bmt);
@@ -27,7 +27,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
 
         public IConfiguration Create()
         {
-            var bmt = (BruTile.Web.KnownTileServers)Enum.Parse(typeof(BruTile.Web.KnownTileServers), cboKnownOsmMapTypes.Text);
+            var bmt = (BruTile.Predefined.KnownTileSource)Enum.Parse(typeof(BruTile.Predefined.KnownTileSource), cboKnownOsmMapTypes.Text);
             return new KnownTileLayerConfiguration(null, bmt, txtOsmMapTypeToken.Text);
         }
 

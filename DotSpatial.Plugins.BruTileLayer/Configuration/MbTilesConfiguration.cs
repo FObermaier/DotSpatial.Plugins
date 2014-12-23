@@ -24,7 +24,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
 #endif
             var uri = new Uri(_mbTilesFile);
             TileSource = new MbTilesTileSource(uri.LocalPath);
-            TileFetcher = new TileFetcher(TileSource.Provider, 
+            TileFetcher = new TileFetcher(ReflectionHelper.Reflect(TileSource), 
                 BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                 BruTileLayerPlugin.Settings.MemoryCacheMaximum, 
                 new TileFetcher.NoopCache());

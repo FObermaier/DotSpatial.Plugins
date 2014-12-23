@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{2A7B15B6-3F91-4D14-ACCB-4771428C62C1}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
@@ -18,6 +20,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSpatial.Plugins.SharpMapLayer", "DotSpatial.Plugins.SharpMapLayer\DotSpatial.Plugins.SharpMapLayer.csproj", "{38C6FB9B-83D9-4ACF-B641-D12BB2D7A6A6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAppWithoutExtension", "TestAppWithoutExtension\TestAppWithoutExtension.csproj", "{99F74D53-98D1-4270-B267-E3EDAAAC71D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSpatial.CodeSamples", "DotSpatial.CodeSamples\DotSpatial.CodeSamples.csproj", "{31C723BD-BB11-4627-A639-FC5A7E83F15C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,10 @@ Global
 		{99F74D53-98D1-4270-B267-E3EDAAAC71D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99F74D53-98D1-4270-B267-E3EDAAAC71D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99F74D53-98D1-4270-B267-E3EDAAAC71D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31C723BD-BB11-4627-A639-FC5A7E83F15C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31C723BD-BB11-4627-A639-FC5A7E83F15C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31C723BD-BB11-4627-A639-FC5A7E83F15C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31C723BD-BB11-4627-A639-FC5A7E83F15C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

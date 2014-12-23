@@ -174,12 +174,12 @@ namespace DotSpatial.Plugins.BruTileLayer.Reprojection
 
         public System.Drawing.Point ToRaster(Coordinate point)
         {
-            point.X -= B1;
-            point.Y -= B2;
+            var px = point.X - B1;
+            var py = point.Y - B2;
 
-            var x = (int) Math.Round(_inverse.A11*point.X + _inverse.A21*point.Y, 
+            var x = (int) Math.Round(_inverse.A11*px + _inverse.A21*py, 
                 MidpointRounding.AwayFromZero);
-            var y = (int) Math.Round(_inverse.A12*point.X + _inverse.A22*point.Y, 
+            var y = (int) Math.Round(_inverse.A12*px + _inverse.A22*py, 
                 MidpointRounding.AwayFromZero);
 
             return new System.Drawing.Point(x,y);

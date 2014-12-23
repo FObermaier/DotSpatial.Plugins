@@ -3,7 +3,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using BruTile;
 using BruTile.Cache;
-using BruTile.Web;
+using BruTile.Predefined;
 using DotSpatial.Serialization;
 
 namespace DotSpatial.Plugins.BruTileLayer.Configuration
@@ -11,8 +11,8 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
     [Serializable, InheritedExport]
     public class KnownTileLayerConfiguration : PermaCacheConfiguration, IConfiguration
     {
-        [Serialize("knownTileServers", ConstructorArgumentIndex = 1)] 
-        private readonly KnownTileServers _knownTileServers;
+        [Serialize("knownTileSource", ConstructorArgumentIndex = 1)] 
+        private readonly KnownTileSource _knownTileSource;
 
         [Serialize("apiKey", ConstructorArgumentIndex = 2)]
         private readonly string _apiKey;
@@ -20,23 +20,22 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         [NonSerialized]
         private readonly TileFetcher _tileFetcher;
 
-        public KnownTileLayerConfiguration(string fileCacheRoot, KnownTileServers tileServers, string apiKey) 
+        public KnownTileLayerConfiguration(string fileCacheRoot, KnownTileSource tileSource, string apiKey) 
             : base(BruTileLayerPlugin.Settings.PermaCacheType, 
-                   fileCacheRoot ?? Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot , tileServers.ToString()))
+                   fileCacheRoot ?? Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot , tileSource.ToString()))
         {
-            _knownTileServers = tileServers;
+            _knownTileSource = tileSource;
             _apiKey = apiKey;
             /*
             if (tileServers == KnownTileServers.Custom)
                 throw new NotSupportedException();
             */
-            var req = new OsmRequest(OsmTileServerConfig.Create(tileServers, apiKey));
 
-            TileSource = new OsmTileSource(req);
+            TileSource = KnownTileSources.Create(tileSource, apiKey);
             TileCache = CreateTileCache();
-            LegendText = tileServers.ToString();
+            LegendText = tileSource.ToString();
 
-            _tileFetcher = new TileFetcher(TileSource.Provider,
+            _tileFetcher = new TileFetcher(ReflectionHelper.Reflect(TileSource),
                                            BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                                            BruTileLayerPlugin.Settings.MemoryCacheMaximum,
                                            TileCache);
@@ -61,7 +60,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         /// <returns>The cloned configuration</returns>
         public IConfiguration Clone()
         {
-            return new KnownTileLayerConfiguration(PermaCacheRoot, _knownTileServers, _apiKey);
+            return new KnownTileLayerConfiguration(PermaCacheRoot, _knownTileSource, _apiKey);
         }
 
         /// <summary>
@@ -83,6 +82,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
 
     }
 
+    /*
     [Serializable]
     internal class CustomOsmLayerConfiguration : PermaCacheConfiguration, IConfiguration
     {
@@ -107,9 +107,10 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             _minLevel = minLevel;
             _maxLevel = maxLevel;
 
-            var req = new OsmRequest(new OsmTileServerConfig(url, _servers.Length, _servers, minLevel, maxLevel));
+            TileSource
+            var req = new WebRequest(KnownTileSources.Create(url, _servers.Length, _servers, minLevel, maxLevel));
 
-            TileSource = new OsmTileSource(req);
+            TileSource = new TileSource(req);
             TileCache = CreateTileCache();
 
             _tileFetcher = new TileFetcher(TileSource.Provider,
@@ -158,5 +159,6 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         { }
 
     }
+     */
 
 }

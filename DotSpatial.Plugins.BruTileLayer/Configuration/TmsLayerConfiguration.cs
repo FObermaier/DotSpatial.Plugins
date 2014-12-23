@@ -36,7 +36,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             if (inverted)
             {
                 var schema = (TileSchema) TileSource.Schema;
-                schema.Axis = AxisDirection.InvertedY;
+                schema.YAxis = YAxis.TMS;
                 schema.OriginY = Math.Abs(schema.OriginY);
             }
             TileCache = CreateTileCache();
@@ -91,7 +91,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         /// </summary>
         public void Initialize()
         {
-            _tileFetcher = new TileFetcher(TileSource.Provider,
+            _tileFetcher = new TileFetcher(ReflectionHelper.Reflect(TileSource),
                                            BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                                            BruTileLayerPlugin.Settings.MemoryCacheMaximum,
                                            TileCache);

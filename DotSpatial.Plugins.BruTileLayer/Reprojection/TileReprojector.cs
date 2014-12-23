@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Windows.Forms.VisualStyles;
 using DotSpatial.Controls;
 using DotSpatial.Data;
 using DotSpatial.Projections;
+using DotSpatial.Projections.Transforms;
 using DotSpatial.Symbology;
 using DotSpatial.Topology;
 using Point = System.Drawing.Point;
@@ -111,17 +115,51 @@ namespace DotSpatial.Plugins.BruTileLayer.Reprojection
             }
 
             Projections.Reproject.ReprojectPoints(xy, null, _target, _source, 0, len);
+            //Projections.Reproject.ReprojectPoints(xy, null, _target, KnownCoordinateSystems.Geographic.World.WGS1984, 0, len);
+            //ClipWGS84(xy);
+            //Projections.Reproject.ReprojectPoints(xy, null, KnownCoordinateSystems.Geographic.World.WGS1984, _source, 0, len);
 
             i = 0;
             y -= y1;
             x2 -= x1;
             for (var x = 0; x < x2; x++)
             {
-                var inPoint = inReference.ToRaster(new Coordinate(xy[i++], xy[i++]));
+                var coord = new Coordinate(xy[i++], xy[i++]);
+                var inPoint = inReference.ToRaster(coord);
+                if (Verbose)
+                {
+                    var tmp1 = _mapArgs.PixelToProj(new Point(x + x1, y + y1));
+                    var tmp2 = new [] {tmp1.X, tmp1.Y};
+                    //Projections.Reproject.ReprojectPoints(tmp2, null, _target, _source, 0, 1);
+                    Console.WriteLine("{0} -> [{1},{2}] -> [{3},{4}] -> {5}", new Point(x + x1, y + y1),
+                        tmp2[0].ToString(NumberFormatInfo.InvariantInfo), tmp2[1].ToString(NumberFormatInfo.InvariantInfo),
+                        coord.X.ToString(NumberFormatInfo.InvariantInfo), coord.Y.ToString(NumberFormatInfo.InvariantInfo), 
+                        inPoint);
+                }
+                //if (!IsValid(checkSize, inPoint))
+                //{
+                //    coord.X *= -1;
+                //    inPoint = inReference.ToRaster(coord);
+                //}
+
                 if (IsValid(checkSize, inPoint))
                     yield return Tuple.Create(inPoint, new Point(x, y));
             }
         }
+
+        //private static void ClipWGS84(double[] xy)
+        //{
+        //    for (var i = 0; i < xy.Length; i++)
+        //    {
+        //        if (xy[i] < -180) xy[i] += 360;
+        //        if (xy[i] > 360) xy[i] -= 360;
+        //        i++;
+        //        if (xy[i] < -90) xy[i] = -90;
+        //        if (xy[i] > 90) xy[i] = 90;
+        //    }
+        //}
+
+        private static bool Verbose;
 
         private static void SetBitmapBuffer(Bitmap bitmap, byte[] buffer, Rectangle? rect = null)
         {

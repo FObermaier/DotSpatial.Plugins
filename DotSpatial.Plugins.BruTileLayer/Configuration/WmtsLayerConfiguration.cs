@@ -68,7 +68,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             TileSource = tileSource;
             TileCache = CreateTileCache();
 
-            _tileFetcher = new TileFetcher(tileSource.Provider, BruTileLayerPlugin.Settings.MemoryCacheMinimum,
+            _tileFetcher = new TileFetcher(ReflectionHelper.Reflect(tileSource), BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                                            BruTileLayerPlugin.Settings.MemoryCacheMaximum, TileCache);
             _initialized = true;
         }
@@ -131,16 +131,16 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
 
 
             var tileSources = GetTileSources(_capabilitiesUri);
-            var tileSource = tileSources.FirstOrDefault(ts => ts.Title.Equals(LegendText, StringComparison.InvariantCulture));
+            var tileSource = tileSources.FirstOrDefault(ts => ts.Name.Equals(LegendText, StringComparison.InvariantCulture));
             if (tileSource == null)
                 throw new ArgumentException("TileSource not found", "capabilitiesUri");
 
             TileSource = tileSource;
-            var provider = ((WebTileProvider)tileSource.Provider);
+            var provider = ((WebTileProvider)ReflectionHelper.Reflect(tileSource));
 
             TileCache = CreateTileCache();
 
-            _tileFetcher = new TileFetcher(TileSource.Provider,
+            _tileFetcher = new TileFetcher(provider,
                                            BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                                            BruTileLayerPlugin.Settings.MemoryCacheMaximum,
                                            TileCache);

@@ -24,18 +24,21 @@ namespace TestApp
         {
             InitializeComponent();
             
+            if (DesignMode) return;
+            
             LogManager.DefaultLogManager.AddLogger(new TestLogger(consoleControl1));
 
             _shell = this;
             appManager.Map = map;
-            
+
             appManager.DockManager = new SpatialDockManager();
             var hc = new MenuBarHeaderControl();
             hc.Initialize(new ToolStripPanel(), msTest);
             appManager.HeaderControl = hc;
             var sss = new SpatialStatusStrip();
-            
+                        
             appManager.ProgressHandler = sss;
+            appManager.ShowExtensionsDialogMode = ShowExtensionsDialogMode.Default;
 
             try
             {
@@ -61,19 +64,76 @@ namespace TestApp
         {
             if (e.Button == MouseButtons.Right)
             {
-                
-                _index++;
-                map.Projection = _infos[_index % _infos.Length];
-                foreach (var layer in map.Layers)
-                {
-                    layer.Reproject(map.Projection);
-                }
+                if (map.Layers.Count == 0)
+                    return;
 
-                map.ZoomToMaxExtent();
-                map.Invalidate();
-                
+                _index++;
+                Reproject(_infos[_index%_infos.Length]);
             }
         }
+
+static Extent Reproject(Extent extent, ProjectionInfo source, ProjectionInfo target, int depth = 0)
+{
+    var xy = ToSequence(extent);
+    DotSpatial.Projections.Reproject.ReprojectPoints(xy, null, source, target, 0, xy.Length / 2);
+    var res = ToExtent(xy);
+
+    return res;
+}
+
+static double[] ToSequence(Extent extent)
+{
+    const int horizontal = 72;
+    const int vertical = 36;
+    var res = new double[horizontal * vertical * 2];
+
+    var dx = extent.Width / (horizontal - 1);
+    var dy = extent.Height / (vertical - 1);
+
+    var minY = extent.MinY;
+    var k = 0;
+    for (var i = 0; i < vertical; i++)
+    {
+        var minX = extent.MinX;
+        for (var j = 0; j < horizontal; j++)
+        {
+            res[k++] = minX;
+            res[k++] = minY;
+            minX += dx;
+        }
+        minY += dy;
+    }
+
+    return res;
+}
+
+private static Extent ToExtent(double[] xyOrdinates)
+{
+    double minX = double.MaxValue, maxX = double.MinValue;
+    double minY = double.MaxValue, maxY = double.MinValue;
+
+    var i = 0;
+    while (i < xyOrdinates.Length)
+    {
+        if (!double.IsNaN(xyOrdinates[i]) &&
+            (double.MinValue < xyOrdinates[i] && xyOrdinates[i] < double.MaxValue))
+        {
+            if (minX > xyOrdinates[i]) minX = xyOrdinates[i];
+            if (maxX < xyOrdinates[i]) maxX = xyOrdinates[i];
+        }
+        i += 1;
+        if (!double.IsNaN(xyOrdinates[i]) &&
+            (double.MinValue < xyOrdinates[i] && xyOrdinates[i] < double.MaxValue))
+        {
+            if (minY > xyOrdinates[i]) minY = xyOrdinates[i];
+            if (maxY < xyOrdinates[i]) maxY = xyOrdinates[i];
+        }
+        i += 1;
+    }
+    return new Extent(minX, minY, maxX, maxY);
+}
+
+
 
         private readonly ProjectionInfo[] _infos;
         private int _index;
@@ -85,9 +145,26 @@ namespace TestApp
             if (e.KeyCode == Keys.Space)
             {
                 _index++;
-                map.Projection = _infos[_index++];
-                map.ZoomToMaxExtent();
+                Reproject(_infos[_index%_infos.Length]);
             }
+        }
+
+        private void Reproject(DotSpatial.Projections.ProjectionInfo proj)
+        {
+            LogManager.DefaultLogManager.LogMessage(string.Format("Reprojecting from '{0}' to '{1};'", map.Projection.Name, proj.Name), DialogResult.OK);
+            
+            var extents = map.ViewExtents;
+            var oldProjection = map.Projection;
+            map.Projection = proj;
+            var newExtents = Reproject(extents, oldProjection, map.Projection);
+
+            foreach (var layer in map.Layers)
+            {
+                layer.Reproject(map.Projection);
+            }
+
+            map.ViewExtents = newExtents;
+            map.Invalidate();
         }
 
         protected override void OnPreviewKeyDown(PreviewKeyDownEventArgs e)
@@ -145,6 +222,16 @@ namespace TestApp
             public int Key
             {
                 get; set; }
+        }
+
+        private void map_Paint(object sender, PaintEventArgs e)
+        {
+            e.Graphics.DrawString(map.Projection.Name, SystemFonts.CaptionFont, SystemBrushes.WindowText, new PointF());
+        }
+
+        private void consoleControl1_OnConsoleOutput(object sender, ConsoleControl.ConsoleEventArgs args)
+        {
+            ((ConsoleControl.ConsoleControl)sender).InternalRichTextBox.ScrollToCaret();
         }
     }
 }

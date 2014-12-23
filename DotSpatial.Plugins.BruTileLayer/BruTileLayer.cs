@@ -127,7 +127,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         [Obsolete]
         public static BruTileLayer CreateOsmMapnicLayer()
         {
-            var config = new KnownTileLayerConfiguration(null, KnownTileServers.Mapnik, string.Empty);
+            var config = new KnownTileLayerConfiguration(null, BruTile.Predefined.KnownTileSource.OpenStreetMap, string.Empty);
             return new BruTileLayer(config);
         }
 
@@ -187,7 +187,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// a MemoryCache.
         /// </summary>
         public BruTileLayer()
-            : this(new KnownTileLayerConfiguration(null, KnownTileServers.Mapnik, string.Empty))
+            : this(new KnownTileLayerConfiguration(null, BruTile.Predefined.KnownTileSource.OpenStreetMap, string.Empty))
         { }
 
         /// <summary>
@@ -315,7 +315,7 @@ namespace DotSpatial.Plugins.BruTileLayer
 
                 var schema = _configuration.TileSource.Schema;
                 var resolution = schema.Resolutions.Values.First(); ;
-                var tiles = new List<TileInfo>(schema.GetTilesInView(schema.Extent, resolution.UnitsPerPixel));
+                var tiles = new List<TileInfo>(schema.GetTileInfos(schema.Extent, resolution.UnitsPerPixel));
 
                 if (tiles.Count <= 4)
                 {
@@ -340,13 +340,13 @@ namespace DotSpatial.Plugins.BruTileLayer
                             var image = GetTileImage(ti);
                             if (image == null) continue;
 
-                            switch (schema.Axis)
+                            switch (schema.YAxis)
                             {
-                                case AxisDirection.InvertedY:
+                                case YAxis.TMS:
                                     g.DrawImage(image, ti.Index.Col * tileWidth, ti.Index.Row * tileHeight, tileWidth,
                                                 tileHeight);
                                     break;
-                                case AxisDirection.Normal:
+                                case YAxis.OSM:
                                     g.DrawImage(image, ti.Index.Col * tileWidth, height - (ti.Index.Row + 1) * tileHeight, tileWidth,
                                                 tileHeight);
                                     break;
@@ -369,7 +369,7 @@ namespace DotSpatial.Plugins.BruTileLayer
 
         private Image GetTileImage(TileInfo tileInfo)
         {
-            var buffer = _configuration.TileSource.Provider.GetTile(tileInfo);
+            var buffer = _configuration.TileSource.GetTile(tileInfo);
             return buffer != null ? Image.FromStream(new MemoryStream(buffer)) : null;
         }
 
@@ -559,7 +559,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                 var level = _level = Utilities.GetNearestLevel(schema.Resolutions, pixelSize);
                 
                 _tileFetcher.Clear();
-                var tiles = new List<TileInfo>(Sort(schema.GetTilesInView(extent, level), geoExtent.Center));
+                var tiles = new List<TileInfo>(Sort(schema.GetTileInfos(extent, level), geoExtent.Center));
                 var waitHandles = new List<WaitHandle>();
                 var tilesNotImmediatelyDrawn = new List<TileInfo>();
 
@@ -659,6 +659,8 @@ namespace DotSpatial.Plugins.BruTileLayer
                     GraphicsUnit.Pixel, _imageAttributes);
 
                 if (outBitmap != bitmap) outBitmap.Dispose();
+                args.Device.DrawRectangle(Pens.Orange, rect);
+                //args.Device.DrawString
             }
         }
     }

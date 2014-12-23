@@ -74,12 +74,29 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             return (T)fi.GetValue(provider);
         }
 
-        public static IEnumerable<ResourceUrl> Reflect(WmtsRequest request)
+        internal static IEnumerable<ResourceUrl> Reflect(WmtsRequest request)
         {
             var fi = typeof (WmtsRequest).GetField("_resourceUrls", BindingFlags.Instance | BindingFlags.NonPublic);
             if (fi == null)
                 throw new ArgumentException("Request does not have a private field '_resourceUrls'", "request");
             return (IEnumerable<ResourceUrl>) fi.GetValue(request);
+        }
+
+        internal static ITileProvider Reflect(ITileSource source)
+        {
+            FieldInfo fi = null;
+            var sourceType = source.GetType();
+            if (sourceType == typeof (HttpTileSource))
+            {
+                fi = typeof (HttpTileSource).GetField("_provider", BindingFlags.Instance | BindingFlags.NonPublic);
+            }
+            else if (sourceType == typeof(TileSource))
+                fi = typeof(TileSource).GetField("_provider", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (fi == null)
+                throw new ArgumentException("Tile source does not have a private field '_provider'", "provider");
+
+            return (ITileProvider) fi.GetValue(source);
         }
     }
 }

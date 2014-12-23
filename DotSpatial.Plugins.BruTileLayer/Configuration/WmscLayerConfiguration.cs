@@ -20,7 +20,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         //
         //needed for schema generation
         [Serialize("axis")]
-        private AxisDirection _axis;
+        private YAxis _axis;
         [Serialize("minX")]
         private double _minX;
         [Serialize("minY")]
@@ -73,7 +73,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             _fileCacheRoot = fileCacheRoot;
             LegendText = name;
 
-            var provider = source.Provider as WebTileProvider;
+            var provider = ReflectionHelper.Reflect(source) as WebTileProvider;
             if (provider == null)
                 throw new ArgumentException("Source does not have a WebTileProvider", "source");
 
@@ -102,7 +102,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         }
         private void SafeSchema(ITileSchema schema)
         {
-            _axis = schema.Axis;
+            _axis = schema.YAxis;
             _minX = schema.Extent.MinX;
             _maxX = schema.Extent.MaxX;
             _minY = schema.Extent.MinY;
@@ -138,7 +138,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             ITileProvider provider = new WebTileProvider(request);
             TileSource = (WmscTileSource)Activator.CreateInstance(typeof(WmscTileSource), BindingFlags.NonPublic, schema, provider);
             TileCache = CreateTileCache();
-            _tileFetcher = new TileFetcher(TileSource.Provider,
+            _tileFetcher = new TileFetcher(provider,
                                            BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                                            BruTileLayerPlugin.Settings.MemoryCacheMaximum,
                                            TileCache);
@@ -150,7 +150,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
         {
             var schema = new TileSchema
                 {
-                    Axis = _axis,
+                    YAxis = _axis,
                     Extent = new Extent(_minX, _minY, _maxX, _maxY),
                     Format = _format,
                     Height = _height,

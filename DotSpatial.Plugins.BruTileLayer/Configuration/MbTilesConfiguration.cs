@@ -23,8 +23,9 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             SQLiteLog.Enabled = true;
 #endif
             var uri = new Uri(_mbTilesFile);
-            TileSource = new MbTilesTileSource(uri.LocalPath);
-            TileFetcher = new TileFetcher(ReflectionHelper.Reflect(TileSource), 
+            var tileSource = new MbTilesTileSource(uri.LocalPath);
+            TileSource = tileSource;
+            TileFetcher = new TileFetcher(tileSource.Provider, 
                 BruTileLayerPlugin.Settings.MemoryCacheMinimum,
                 BruTileLayerPlugin.Settings.MemoryCacheMaximum, 
                 new TileFetcher.NoopCache());

@@ -90,8 +90,14 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             {
                 fi = typeof (HttpTileSource).GetField("_provider", BindingFlags.Instance | BindingFlags.NonPublic);
             }
-            else if (sourceType == typeof(TileSource))
+            else if (sourceType == typeof(TileSource) 
+#pragma warning disable 618
+                     || sourceType == typeof(BingTileSource)
+#pragma warning restore 618
+                )
                 fi = typeof(TileSource).GetField("_provider", BindingFlags.Instance | BindingFlags.NonPublic);
+
+
 
             if (fi == null)
                 throw new ArgumentException("Tile source does not have a private field '_provider'", "provider");

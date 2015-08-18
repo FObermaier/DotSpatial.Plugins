@@ -76,7 +76,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration.Forms
         public IConfiguration Create()
         {
             var wmsc = (WmscTileSource) _selectedTileSource;
-            var wmscp = (WebTileProvider) ReflectionHelper.Reflect(wmsc);
+            var wmscp = (HttpTileProvider)ReflectionHelper.Reflect(wmsc);
             var wmscr = ReflectionHelper.ReflectRequest<WmscRequest>(wmscp);
             var uri = ReflectionHelper.ReflectBaseUri(wmscr);
             var host = uri.Host.Replace(".", "_");

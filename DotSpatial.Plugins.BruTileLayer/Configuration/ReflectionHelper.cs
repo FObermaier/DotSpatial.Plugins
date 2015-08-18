@@ -65,9 +65,9 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             return (T)fi.GetValue(request);
         }
 
-        internal static T ReflectRequest<T>(WebTileProvider provider) where T : IRequest
+        internal static T ReflectRequest<T>(HttpTileProvider provider) where T : IRequest
         {
-            var fi = typeof(WebTileProvider).GetField("_request", BindingFlags.Instance | BindingFlags.NonPublic);
+            var fi = typeof(HttpTileProvider).GetField("_request", BindingFlags.Instance | BindingFlags.NonPublic);
             if (fi == null)
                 throw new ArgumentException("Provider does not have a private field '_request'", "provider");
 
@@ -90,11 +90,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             {
                 fi = typeof (HttpTileSource).GetField("_provider", BindingFlags.Instance | BindingFlags.NonPublic);
             }
-            else if (sourceType == typeof(TileSource) 
-#pragma warning disable 618
-                     || sourceType == typeof(BingTileSource)
-#pragma warning restore 618
-                )
+            else if (sourceType == typeof(TileSource))
                 fi = typeof(TileSource).GetField("_provider", BindingFlags.Instance | BindingFlags.NonPublic);
 
 

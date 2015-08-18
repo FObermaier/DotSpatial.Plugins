@@ -73,7 +73,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             _fileCacheRoot = fileCacheRoot;
             LegendText = name;
 
-            var provider = ReflectionHelper.Reflect(source) as WebTileProvider;
+            var provider = ReflectionHelper.Reflect(source) as HttpTileProvider;
             if (provider == null)
                 throw new ArgumentException("Source does not have a WebTileProvider", "source");
 
@@ -135,7 +135,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             var schema = RestoreSchema();
             var request = new WmscRequest(new Uri(_url), schema, _layers, _styles, _customParameters, _version);
             
-            ITileProvider provider = new WebTileProvider(request);
+            ITileProvider provider = new HttpTileProvider(request);
             TileSource = (WmscTileSource)Activator.CreateInstance(typeof(WmscTileSource), BindingFlags.NonPublic, schema, provider);
             TileCache = CreateTileCache();
             _tileFetcher = new TileFetcher(provider,
@@ -153,8 +153,10 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
                     YAxis = _axis,
                     Extent = new Extent(_minX, _minY, _maxX, _maxY),
                     Format = _format,
+                    /*
                     Height = _height,
                     Width = _width,
+                     */
                     Name = _schemaName,
                     OriginX = _originX,
                     OriginY = _originY,

@@ -37,6 +37,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using BruTile;
+using BruTile.Predefined;
 using BruTile.Web;
 using DotSpatial.Controls;
 using DotSpatial.Data;
@@ -76,8 +77,8 @@ namespace DotSpatial.Plugins.BruTileLayer
         [Obsolete]
         public static BruTileLayer CreateBingRoadsLayer(string token)
         {
-            var config = new BingLayerConfiguration(null, BingMapType.Roads, token);
-            return new BruTileLayer(config);
+            var ktc = string.IsNullOrEmpty(token) ? KnownTileSource.BingRoadsStaging : KnownTileSource.BingRoads;
+            return CreateKnownLayer(ktc, token);
         }
 
         /// <summary>
@@ -95,8 +96,8 @@ namespace DotSpatial.Plugins.BruTileLayer
         [Obsolete]
         public static BruTileLayer CreateBingHybridLayer(string token)
         {
-            var config = new BingLayerConfiguration(null, BingMapType.Hybrid, token);
-            return new BruTileLayer(config);
+            var ktc = string.IsNullOrEmpty(token) ? KnownTileSource.BingHybridStaging : KnownTileSource.BingHybrid;
+            return CreateKnownLayer(ktc, token);
         }
 
 
@@ -116,7 +117,13 @@ namespace DotSpatial.Plugins.BruTileLayer
         [Obsolete]
         public static BruTileLayer CreateBingAerialLayer(string token)
         {
-            var config = new BingLayerConfiguration(null, BingMapType.Aerial, token);
+            var ktc = string.IsNullOrEmpty(token) ? KnownTileSource.BingAerialStaging : KnownTileSource.BingAerial;
+            return CreateKnownLayer(ktc, token);
+        }
+
+        public static BruTileLayer CreateKnownLayer(KnownTileSource source, string apiKey)
+        {
+            var config = new KnownTileLayerConfiguration(null, source, apiKey);
             return new BruTileLayer(config);
         }
 

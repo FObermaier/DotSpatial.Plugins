@@ -40,9 +40,9 @@
     </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BruTile, Version=0.12.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\BruTile.0.12.0\lib\net40\BruTile.dll</HintPath>
+    <Reference Include="BruTile, Version=0.13.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\BruTile.0.13.0\lib\net40\BruTile.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="BruTile.Desktop, Version=0.12.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -120,7 +120,6 @@
     <Compile Include="BruTileLayer.cs" />
     <Compile Include="BruTileLayerPlugin.cs" />
     <Compile Include="BruTileLayerSettings.cs" />
-    <Compile Include="Configuration\BingLayerConfiguration.cs" />
     <Compile Include="Configuration\CacheConfiguration.cs" />
     <Compile Include="Configuration\FileTileLayerConfiguration.cs" />
     <Compile Include="Configuration\Forms\AddProviderForm.cs">
@@ -171,12 +170,6 @@
     </Compile>
     <Compile Include="Configuration\Forms\ucKnownTileLayerConfiguration.Designer.cs">
       <DependentUpon>ucKnownTileLayerConfiguration.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Configuration\Forms\ucBingLayerConfiguration.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Configuration\Forms\ucBingLayerConfiguration.Designer.cs">
-      <DependentUpon>ucBingLayerConfiguration.cs</DependentUpon>
     </Compile>
     <Compile Include="Configuration\Forms\ucConfigurationContainer.cs">
       <SubType>UserControl</SubType>
@@ -262,9 +255,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Configuration\Forms\ucKnownTileLayerConfiguration.resx">
       <DependentUpon>ucKnownTileLayerConfiguration.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Configuration\Forms\ucBingLayerConfiguration.resx">
-      <DependentUpon>ucBingLayerConfiguration.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Configuration\Forms\ucConfigurationContainer.resx">
       <DependentUpon>ucConfigurationContainer.cs</DependentUpon>

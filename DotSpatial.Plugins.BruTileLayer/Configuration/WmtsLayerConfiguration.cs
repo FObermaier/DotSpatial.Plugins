@@ -84,6 +84,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             sb.AppendFormat(NumberFormatInfo.InvariantInfo, ";{0}", r.MatrixHeight);
             sb.AppendFormat(NumberFormatInfo.InvariantInfo, ";{0}", r.TileWidth);
             sb.AppendFormat(NumberFormatInfo.InvariantInfo, ";{0}", r.TileHeight);
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, ";{0}", r.ScaleDenominator);
             sb.Append("}");
             return sb.ToString();
         }
@@ -95,17 +96,14 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
             {
                 resolutionString = resolutionString.Substring(1, resolutionString.Length - 2);
                 var parts = resolutionString.Split(';');
-                return new Resolution
-                {
-                    Id = parts[0],
-                    UnitsPerPixel = double.Parse(parts[1], NumberFormatInfo.InvariantInfo),
-                    Left = double.Parse(parts[2], NumberFormatInfo.InvariantInfo),
-                    Top = double.Parse(parts[3], NumberFormatInfo.InvariantInfo),
-                    MatrixWidth = int.Parse(parts[4], NumberFormatInfo.InvariantInfo),
-                    MatrixHeight = int.Parse(parts[5], NumberFormatInfo.InvariantInfo),
-                    TileWidth = int.Parse(parts[6], NumberFormatInfo.InvariantInfo),
-                    TileHeight = int.Parse(parts[7], NumberFormatInfo.InvariantInfo),
-                };
+                return new Resolution(parts[0], double.Parse(parts[1], NumberFormatInfo.InvariantInfo), 
+                    int.Parse(parts[6], NumberFormatInfo.InvariantInfo),
+                    int.Parse(parts[7], NumberFormatInfo.InvariantInfo),
+                    double.Parse(parts[3], NumberFormatInfo.InvariantInfo),
+                    double.Parse(parts[2], NumberFormatInfo.InvariantInfo),
+                    int.Parse(parts[4], NumberFormatInfo.InvariantInfo),
+                    int.Parse(parts[5], NumberFormatInfo.InvariantInfo),
+                    double.Parse(parts[8], NumberFormatInfo.InvariantInfo));
             }
             throw new ArgumentException("Not a valid resolution string", "resolutionString");
         }
@@ -136,7 +134,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
                 throw new ArgumentException("TileSource not found", "capabilitiesUri");
 
             TileSource = tileSource;
-            var provider = ((WebTileProvider)ReflectionHelper.Reflect(tileSource));
+            var provider = ((HttpTileProvider)ReflectionHelper.Reflect(tileSource));
 
             TileCache = CreateTileCache();
 

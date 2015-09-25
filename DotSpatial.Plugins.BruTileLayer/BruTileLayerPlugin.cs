@@ -18,7 +18,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         public BruTileLayerPlugin()
         {
             //_typeNameManager = new TypeNameManager(Assembly.GetExecutingAssembly());
-            var asm = Assembly.GetAssembly(typeof (BruTile.Web.BingMapType));
+            var asm = Assembly.GetAssembly(typeof (BruTile.Predefined.KnownTileSource));
             System.Diagnostics.Debug.Assert(!asm.IsDynamic);
             System.Diagnostics.Debug.Assert(asm.IsFullyTrusted);
             asm = Assembly.GetExecutingAssembly();

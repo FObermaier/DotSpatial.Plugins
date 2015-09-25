@@ -666,9 +666,24 @@ namespace DotSpatial.Plugins.BruTileLayer
                     GraphicsUnit.Pixel, _imageAttributes);
 
                 if (outBitmap != bitmap) outBitmap.Dispose();
-                args.Device.DrawRectangle(Pens.Orange, rect);
-                //args.Device.DrawString
+                if (FrameTile)
+                {
+                    if (FramePen != null)
+                        args.Device.DrawRectangle(FramePen, rect);
+                }
             }
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating if each tile should be framed or not
+        /// </summary>
+        public bool FrameTile { get; set; }
+
+        ///
+        /// <summary>
+        /// Gets or sets a value indicating the pen to use for the tile's frame
+        /// </summary>
+        public Pen FramePen { get; set; }
+
     }
 }

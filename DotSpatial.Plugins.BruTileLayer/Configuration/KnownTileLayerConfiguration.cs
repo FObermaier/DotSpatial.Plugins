@@ -11,15 +11,37 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
     [Serializable, InheritedExport]
     public class KnownTileLayerConfiguration : PermaCacheConfiguration, IConfiguration
     {
-        [Serialize("knownTileSource", ConstructorArgumentIndex = 1)] 
+        [Serialize("knownTileSource", ConstructorArgumentIndex = 2)] 
         private readonly KnownTileSource _knownTileSource;
 
-        [Serialize("apiKey", ConstructorArgumentIndex = 2)]
+        [Serialize("apiKey", ConstructorArgumentIndex = 3)]
         private readonly string _apiKey;
 
         [NonSerialized]
         private readonly TileFetcher _tileFetcher;
 
+        public KnownTileLayerConfiguration(PermaCacheType permaCacheType, string fileCacheRoot,
+            KnownTileSource tileSource, string apiKey)
+            : base(permaCacheType, Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot, tileSource.ToString()))
+        {
+            _knownTileSource = tileSource;
+            _apiKey = apiKey;
+            /*
+            if (tileServers == KnownTileServers.Custom)
+                throw new NotSupportedException();
+            */
+
+            TileSource = KnownTileSources.Create(tileSource, apiKey);
+            TileCache = CreateTileCache();
+            LegendText = tileSource.ToString();
+
+            _tileFetcher = new TileFetcher(ReflectionHelper.Reflect(TileSource),
+                                           BruTileLayerPlugin.Settings.MemoryCacheMinimum,
+                                           BruTileLayerPlugin.Settings.MemoryCacheMaximum,
+                                           TileCache);
+        }
+
+        [Obsolete]
         public KnownTileLayerConfiguration(string fileCacheRoot, KnownTileSource tileSource, string apiKey) 
             : base(BruTileLayerPlugin.Settings.PermaCacheType, 
                    fileCacheRoot ?? Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot , tileSource.ToString()))

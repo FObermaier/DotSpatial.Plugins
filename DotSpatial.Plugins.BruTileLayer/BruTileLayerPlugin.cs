@@ -39,6 +39,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             {
                 return asm;
             }
+            //Console.WriteLine(args.Name);
             return null;
         }
 
@@ -92,6 +93,9 @@ namespace DotSpatial.Plugins.BruTileLayer
 
         private void AddMenus(IHeaderControl headerControl)
         {
+            if (headerControl == null)
+                return;
+
             var sai = new SimpleActionItem("Add BruTileLayer ...", OnInvokeBruTileLayerDialog);
             //sai.LargeImage = Properties.Resources.BruTileLogoBig;
             //sai.SmallImage = Properties.Resources.BruTileLogoSmall;

@@ -18,6 +18,9 @@ namespace DotSpatial.Plugins.BruTileLayer.Reprojection
 
         public static IList<Coordinate> Reproject(this IList<Coordinate> seq, ProjectionInfo source, ProjectionInfo target)
         {
+            if (target.Transform == null)
+                return seq;
+
             var ords = new double[seq.Count * 2];
             var z = new Double[seq.Count];
             var j = 0;
@@ -90,6 +93,9 @@ namespace DotSpatial.Plugins.BruTileLayer.Reprojection
 
         public static Extent Reproject(this Extent extent, ProjectionInfo source, ProjectionInfo target, int depth = 0)
         {
+            if (target.Transform == null)
+                return extent;
+
             var xy = ToSequence(extent);
             Projections.Reproject.ReprojectPoints(xy, null, source, target, 0, xy.Length / 2);
             var res = ToExtent(xy);

@@ -233,5 +233,43 @@ private static Extent ToExtent(double[] xyOrdinates)
         {
             ((ConsoleControl.ConsoleControl)sender).InternalRichTextBox.ScrollToCaret();
         }
+
+        private void mnuFileLoadMap_Click(object sender, EventArgs e)
+        {
+            using (var ofd = new OpenFileDialog
+            {
+                Filter = appManager.SerializationManager.OpenDialogFilterText,
+                FilterIndex = 0,
+                FileName = appManager.SerializationManager.CurrentProjectFile
+
+                //Title = appManager.SerializationManager.
+
+            })
+            {
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    appManager.SerializationManager.OpenProject(ofd.FileName);
+                }
+            }
+        }
+
+        private void mnuFileSaveMap_Click(object sender, EventArgs e)
+        {
+            using (var sfd = new SaveFileDialog()
+            {
+                Filter = appManager.SerializationManager.SaveDialogFilterText,
+                FilterIndex = 0,
+                FileName = appManager.SerializationManager.CurrentProjectFile
+
+                //Title = appManager.SerializationManager.
+
+            })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    appManager.SerializationManager.SaveProject(sfd.FileName);
+                }
+            }
+        }
     }
 }

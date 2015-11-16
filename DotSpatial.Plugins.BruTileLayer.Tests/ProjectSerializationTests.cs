@@ -4,6 +4,7 @@ using System.ComponentModel.Composition;
 using System.Windows.Forms;
 using BruTile.Predefined;
 using DotSpatial.Controls;
+using DotSpatial.Projections;
 using NUnit.Framework;
 using BTL = DotSpatial.Plugins.BruTileLayer.BruTileLayer ;
 
@@ -64,6 +65,8 @@ namespace DotSpatial.Plugins.BruTileLayer
                     var lyrT = (BTL)lyr1.Clone();
 
                     map.Layers.Add(lyr1);
+                    map.Projection = ProjectionInfo.FromAuthorityCode("EPSG", 4326);
+
                     map.ZoomToMaxExtent();
                     try
                     {

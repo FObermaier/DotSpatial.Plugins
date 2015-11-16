@@ -140,11 +140,40 @@ namespace DotSpatial.Plugins.BruTileLayer
 
         #region Fields
 
-        //[NonSerialized]
-        //private readonly List<SymbologyMenuItem> _contextMenuItems = 
-        //    new List<SymbologyMenuItem>();
-        private ProjectionInfo _projectionInfo;
+        private ProjectionInfo _sourceProjection;
+
+        [Serialize("sourceProjection")]
+        private string SourceProjectionEsriString
+        {
+            get
+            {
+                return _sourceProjection.ToEsriString();
+            }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    _sourceProjection = ProjectionInfo.FromAuthorityCode("EPSG", 3758);
+                else
+                    _sourceProjection = ProjectionInfo.FromEsriString(value);
+            }
+        }
+
         [Serialize("targetProjection")]
+        private string TargetProjectionEsriString {
+            get
+            {
+                return _targetProjection == null ? string.Empty : _targetProjection.ToEsriString();
+            }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    _targetProjection = null;
+                else
+                    _targetProjection = ProjectionInfo.FromEsriString(value);
+                Projection = _targetProjection ?? _sourceProjection;
+            }
+        }
+
         private ProjectionInfo _targetProjection;
         [Serialize("config", ConstructorArgumentIndex = 0)]
         private readonly IConfiguration _configuration;
@@ -160,22 +189,6 @@ namespace DotSpatial.Plugins.BruTileLayer
         private readonly Stopwatch _stopwatch = new Stopwatch();
 
         [NonSerialized] private string _level;
-
-        [Serialize("projection")]
-// ReSharper disable InconsistentNaming
-        private ProjectionInfo _projection
-// ReSharper restore InconsistentNaming
-        {
-            get { return _projectionInfo; }
-            set
-            {
-                if (value == null)
-                    return;
-                if (value.Transform == null)
-                    return;
-                _projectionInfo = value;
-            }
-        }
 
         [NonSerialized]
         private readonly ImageAttributes _imageAttributes;
@@ -220,14 +233,14 @@ namespace DotSpatial.Plugins.BruTileLayer
             // 
             _configuration = configuration;
             var tileSource = configuration.TileSource;
-            _projectionInfo = AuthorityCodeHandler.Instance[tileSource.Schema.Srs];
-            if (_projectionInfo == null)
-                _projectionInfo = AuthorityCodeHandler.Instance["EPSG:3857"];
+            _sourceProjection = AuthorityCodeHandler.Instance[tileSource.Schema.Srs];
+            if (_sourceProjection == null)
+                _sourceProjection = AuthorityCodeHandler.Instance["EPSG:3857"];
             
             // WebMercator: set datum to WGS1984 for better accuracy 
-            if (tileSource.Schema.Srs == "EPSG:3857") _projectionInfo.GeographicInfo.Datum = KnownCoordinateSystems.Geographic.World.WGS1984.GeographicInfo.Datum;
+            if (tileSource.Schema.Srs == "EPSG:3857") _sourceProjection.GeographicInfo.Datum = KnownCoordinateSystems.Geographic.World.WGS1984.GeographicInfo.Datum;
             
-            Projection = _projection;
+            Projection = _sourceProjection;
             var extent = tileSource.Schema.Extent;
             MyExtent = new Extent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);
 
@@ -254,10 +267,10 @@ namespace DotSpatial.Plugins.BruTileLayer
             
             //System.Diagnostics.Debug.WriteLine("Tile received (Index({0}, {1}, {2}))", i.Level, i.Row, i.Col);
 // some timed refreshes if the server becomes slooow...
-            if (_stopwatch.Elapsed.Seconds > 1 && ! _tileFetcher.Ready())
+            if (_stopwatch.Elapsed.Milliseconds > 250 && ! _tileFetcher.Ready())
             {
                 _stopwatch.Reset();
-                Invalidate();
+                MapFrame.Invalidate();
                 _stopwatch.Restart();
                 return;
             }
@@ -265,14 +278,14 @@ namespace DotSpatial.Plugins.BruTileLayer
             var ext = ToBrutileExtent(MapFrame.ViewExtents);
             if (ext.Intersects(e.TileInfo.Extent))
             {
-                Invalidate(FromBruTileExtent(e.TileInfo.Extent));
+                MapFrame.Invalidate(FromBruTileExtent(e.TileInfo.Extent));
             }
         }
 
         private void HandleQueueEmpty(object sender, EventArgs empty)
         {
             _stopwatch.Reset();
-            Invalidate();
+            MapFrame.Invalidate();
         }
 
         protected override void OnShowProperties(HandledEventArgs e)
@@ -281,7 +294,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             {
                 frm.BruTileLayer = this;
                 if (frm.ShowDialog() == DialogResult.OK)
-                    frm.BruTileLayer.Invalidate();
+                    frm.BruTileLayer.MapFrame.Invalidate();
             }
         }
 
@@ -349,12 +362,12 @@ namespace DotSpatial.Plugins.BruTileLayer
 
                             switch (schema.YAxis)
                             {
-                                case YAxis.TMS:
+                                case YAxis.OSM:
                                     g.DrawImage(image, ti.Index.Col * tileWidth, ti.Index.Row * tileHeight, tileWidth,
                                                 tileHeight);
                                     break;
-                                case YAxis.OSM:
-                                    g.DrawImage(image, ti.Index.Col * tileWidth, height - (ti.Index.Row + 1) * tileHeight, tileWidth,
+                                case YAxis.TMS:
+                                    g.DrawImage(image, ti.Index.Col * tileWidth - 1, height - (ti.Index.Row + 1) * tileHeight - 1, tileWidth,
                                                 tileHeight);
                                     break;
 
@@ -417,7 +430,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             get
             {
                 return _targetProjection != null 
-                    ? MyExtent.Reproject(_projectionInfo, _targetProjection) 
+                    ? MyExtent.Reproject(_sourceProjection, _targetProjection) 
                     : MyExtent;
             }
         }
@@ -455,7 +468,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             if (targetProjection != null)
             {
                 //Set the target projection if necessary
-                _targetProjection = targetProjection.Matches(_projectionInfo)
+                _targetProjection = targetProjection.Matches(_sourceProjection)
                     ? null
                     : targetProjection;
             }
@@ -465,10 +478,10 @@ namespace DotSpatial.Plugins.BruTileLayer
             }
 
             // Adjusting the projection
-            Projection = _targetProjection ?? _projectionInfo;
+            Projection = _targetProjection ?? _sourceProjection;
 
             //Is this necessary?
-            //Invalidate(Extent);
+            //MapFrame.Invalidate(Extent);
         }
 
         /// <summary>
@@ -487,7 +500,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                     _imageAttributes.SetColorMatrix(ca, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
                     OnItemChanged(EventArgs.Empty);
                     if (MapFrame != null)
-                        Invalidate(MapFrame.ViewExtents);
+                        MapFrame.Invalidate(MapFrame.ViewExtents);
                 }
             }
         }
@@ -529,7 +542,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                 // If we have a target projection, so project extent to providers extent
                 var geoExtent = _targetProjection == null
                                     ? region
-                                    : region.Intersection(Extent).Reproject(_targetProjection, _projectionInfo);
+                                    : region.Intersection(Extent).Reproject(_targetProjection, _sourceProjection);
 
                 LogManager.DefaultLogManager.LogMessage("SOURCE: " + geoExtent, DialogResult.OK);
 
@@ -574,7 +587,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                                                         DialogResult.OK);
 
                 // Set up Tile reprojector
-                var tr = new TileReprojector(args, _projectionInfo, _targetProjection);
+                var tr = new TileReprojector(args, _sourceProjection, _targetProjection);
 
 
                 var sw = new System.Diagnostics.Stopwatch();
@@ -617,7 +630,7 @@ namespace DotSpatial.Plugins.BruTileLayer
 
                 LogManager.DefaultLogManager.LogMessage(string.Format("{0} ms", sw.ElapsedMilliseconds), DialogResult.OK);
                 //if (InvalidRegion != null)
-                //    Invalidate();
+                //    MapFrame.Invalidate();
 
                 //_stopwatch.Restart();
                 Monitor.Exit(_drawLock);
@@ -643,7 +656,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             if (buffer == null || buffer.Length == 0)
                 return;
 
-            tr = tr ?? new TileReprojector(args, _projection, _targetProjection);
+            tr = tr ?? new TileReprojector(args, _sourceProjection, _targetProjection);
 
             using (var bitmap = (Bitmap)Image.FromStream(new MemoryStream(buffer)))
             {

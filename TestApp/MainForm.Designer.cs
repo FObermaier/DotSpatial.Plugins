@@ -41,6 +41,9 @@ namespace TestApp
             this.map = new DotSpatial.Controls.Map();
             this.consoleControl1 = new ConsoleControl.ConsoleControl();
             this.msTest = new System.Windows.Forms.MenuStrip();
+            this.mnuFile = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFileLoadMap = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFileSaveMap = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -49,6 +52,7 @@ namespace TestApp
             this.splitHorizontal.Panel1.SuspendLayout();
             this.splitHorizontal.Panel2.SuspendLayout();
             this.splitHorizontal.SuspendLayout();
+            this.msTest.SuspendLayout();
             this.SuspendLayout();
             // 
             // appManager
@@ -154,11 +158,36 @@ namespace TestApp
             // 
             // msTest
             // 
+            this.msTest.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuFile});
             this.msTest.Location = new System.Drawing.Point(0, 0);
             this.msTest.Name = "msTest";
             this.msTest.Size = new System.Drawing.Size(611, 24);
             this.msTest.TabIndex = 2;
             this.msTest.Text = "menuStrip1";
+            // 
+            // mnuFile
+            // 
+            this.mnuFile.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuFileLoadMap,
+            this.mnuFileSaveMap});
+            this.mnuFile.Name = "mnuFile";
+            this.mnuFile.Size = new System.Drawing.Size(37, 20);
+            this.mnuFile.Text = "File";
+            // 
+            // mnuFileLoadMap
+            // 
+            this.mnuFileLoadMap.Name = "mnuFileLoadMap";
+            this.mnuFileLoadMap.Size = new System.Drawing.Size(152, 22);
+            this.mnuFileLoadMap.Text = "Load map";
+            this.mnuFileLoadMap.Click += new System.EventHandler(this.mnuFileLoadMap_Click);
+            // 
+            // mnuFileSaveMap
+            // 
+            this.mnuFileSaveMap.Name = "mnuFileSaveMap";
+            this.mnuFileSaveMap.Size = new System.Drawing.Size(152, 22);
+            this.mnuFileSaveMap.Text = "Save map";
+            this.mnuFileSaveMap.Click += new System.EventHandler(this.mnuFileSaveMap_Click);
             // 
             // MainForm
             // 
@@ -178,6 +207,8 @@ namespace TestApp
             this.splitHorizontal.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitHorizontal)).EndInit();
             this.splitHorizontal.ResumeLayout(false);
+            this.msTest.ResumeLayout(false);
+            this.msTest.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -193,6 +224,9 @@ namespace TestApp
         private Map map;
         private cctrl consoleControl1;
         private MenuStrip msTest;
+        private ToolStripMenuItem mnuFile;
+        private ToolStripMenuItem mnuFileLoadMap;
+        private ToolStripMenuItem mnuFileSaveMap;
     }
 }
 

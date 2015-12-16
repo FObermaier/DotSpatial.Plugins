@@ -30,17 +30,15 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using BruTile;
 using BruTile.Predefined;
-using BruTile.Web;
 using DotSpatial.Controls;
-using DotSpatial.Data;
 using DotSpatial.Data.Forms;
 using DotSpatial.Plugins.BruTileLayer.Configuration;
 using DotSpatial.Plugins.BruTileLayer.Configuration.Forms;
@@ -121,6 +119,12 @@ namespace DotSpatial.Plugins.BruTileLayer
             return CreateKnownLayer(ktc, token);
         }
 
+        /// <summary>
+        /// Creates a layer displaying a known tile source
+        /// </summary>
+        /// <param name="source">The known tile source</param>
+        /// <param name="apiKey">The api key</param>
+        /// <returns>The layer</returns>
         public static BruTileLayer CreateKnownLayer(KnownTileSource source, string apiKey)
         {
             var config = new KnownTileLayerConfiguration(null, source, apiKey);
@@ -134,7 +138,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         [Obsolete]
         public static BruTileLayer CreateOsmMapnicLayer()
         {
-            var config = new KnownTileLayerConfiguration(null, BruTile.Predefined.KnownTileSource.OpenStreetMap, string.Empty);
+            var config = new KnownTileLayerConfiguration(null, KnownTileSource.OpenStreetMap, string.Empty);
             return new BruTileLayer(config);
         }
 
@@ -207,7 +211,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// a MemoryCache.
         /// </summary>
         public BruTileLayer()
-            : this(new KnownTileLayerConfiguration(null, BruTile.Predefined.KnownTileSource.OpenStreetMap, string.Empty))
+            : this(new KnownTileLayerConfiguration(null, KnownTileSource.OpenStreetMap, string.Empty))
         { }
 
         /// <summary>
@@ -233,7 +237,9 @@ namespace DotSpatial.Plugins.BruTileLayer
             // 
             _configuration = configuration;
             var tileSource = configuration.TileSource;
-            _sourceProjection = AuthorityCodeHandler.Instance[tileSource.Schema.Srs];
+            // for wmts this might be some crude value (urn)
+            var authorityCode = ToAuthotityCode(tileSource.Schema.Srs);
+            _sourceProjection = AuthorityCodeHandler.Instance[authorityCode];
             if (_sourceProjection == null)
                 _sourceProjection = AuthorityCodeHandler.Instance["EPSG:3857"];
             
@@ -258,6 +264,35 @@ namespace DotSpatial.Plugins.BruTileLayer
             //Set the wrap mode
             _imageAttributes = new ImageAttributes();
             _imageAttributes.SetWrapMode(WrapMode.TileFlipXY);
+        }
+
+        private static string ToAuthotityCode(string srs)
+        {
+            if (string.IsNullOrWhiteSpace(srs))
+                throw new ArgumentNullException("srs");
+
+            // no colon
+            if (srs.IndexOf(":",StringComparison.CurrentCulture) < 0 )
+            {
+                int value;
+                if (!int.TryParse(srs, NumberStyles.Integer, NumberFormatInfo.InvariantInfo, out value))
+                    throw new ArgumentException("srs");
+                return string.Format("EPSG:{0}", value);
+            }
+
+            // break the string in parts
+            var srsParts = srs.Split(':');
+
+            // one colon => assume Authority:Code
+            if (srsParts.Length == 2)
+                return srs;
+
+            // urn:ogc:def:crs:EPSG:6.18.3:3857
+            if (srsParts.Length == 7)
+                return string.Format("{0}:{1}", srsParts[4], srsParts[6]);
+
+            // Should never reach here!
+            throw new ArgumentException("srs");
         }
 
         private void HandleTileReceived(object sender, TileReceivedEventArgs e)
@@ -334,7 +369,7 @@ namespace DotSpatial.Plugins.BruTileLayer
             {
 
                 var schema = _configuration.TileSource.Schema;
-                var resolution = schema.Resolutions.Values.First(); ;
+                var resolution = schema.Resolutions.Values.First();
                 var tiles = new List<TileInfo>(schema.GetTileInfos(schema.Extent, resolution.UnitsPerPixel));
 
                 if (tiles.Count <= 4)
@@ -590,7 +625,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                 var tr = new TileReprojector(args, _sourceProjection, _targetProjection);
 
 
-                var sw = new System.Diagnostics.Stopwatch();
+                var sw = new Stopwatch();
                 sw.Start();
 
                 // Store the current transformation
@@ -625,8 +660,8 @@ namespace DotSpatial.Plugins.BruTileLayer
 
                 sw.Stop();
                 
-                System.Diagnostics.Debug.WriteLine("{0} ms", sw.ElapsedMilliseconds);
-                System.Diagnostics.Debug.Write(string.Format("Trying to render #{0} tiles: ", tiles.Count));
+                Debug.WriteLine("{0} ms", sw.ElapsedMilliseconds);
+                Debug.Write(string.Format("Trying to render #{0} tiles: ", tiles.Count));
 
                 LogManager.DefaultLogManager.LogMessage(string.Format("{0} ms", sw.ElapsedMilliseconds), DialogResult.OK);
                 //if (InvalidRegion != null)
@@ -660,11 +695,11 @@ namespace DotSpatial.Plugins.BruTileLayer
 
             using (var bitmap = (Bitmap)Image.FromStream(new MemoryStream(buffer)))
             {
-                var inWorldFile = new Reprojection.WorldFile(resolution.UnitsPerPixel, 0, 
+                var inWorldFile = new WorldFile(resolution.UnitsPerPixel, 0, 
                                                 0, -resolution.UnitsPerPixel,
                                                 info.Extent.MinX, info.Extent.MaxY);
 
-                Reprojection.WorldFile outWorldFile;
+                WorldFile outWorldFile;
                 Bitmap outBitmap;
 
 

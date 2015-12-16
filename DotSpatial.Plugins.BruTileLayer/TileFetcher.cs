@@ -139,6 +139,7 @@ namespace DotSpatial.Plugins.BruTileLayer
 
             byte[] result = null;
 
+            if (!Thread.CurrentThread.IsAlive) return;
             //Try get the tile
             try
             {

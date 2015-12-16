@@ -41,7 +41,7 @@ namespace DotSpatial.Plugins.BruTileLayer.Configuration
                                            TileCache);
         }
 
-        [Obsolete]
+        //[Obsolete]
         public KnownTileLayerConfiguration(string fileCacheRoot, KnownTileSource tileSource, string apiKey) 
             : base(BruTileLayerPlugin.Settings.PermaCacheType, 
                    fileCacheRoot ?? Path.Combine(BruTileLayerPlugin.Settings.PermaCacheRoot , tileSource.ToString()))

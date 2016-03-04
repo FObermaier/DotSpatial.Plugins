@@ -38,6 +38,7 @@ using System.Threading;
 using System.Windows.Forms;
 using BruTile;
 using BruTile.Predefined;
+using BtExtent = BruTile.Extent;
 using DotSpatial.Controls;
 using DotSpatial.Data.Forms;
 using DotSpatial.Plugins.BruTileLayer.Configuration;
@@ -49,7 +50,7 @@ using DotSpatial.Projections.AuthorityCodes;
 using DotSpatial.Serialization;
 using DotSpatial.Symbology;
 using DotSpatial.Topology;
-using Extent = DotSpatial.Data.Extent;
+using DsExtent = DotSpatial.Data.Extent;
 
 namespace DotSpatial.Plugins.BruTileLayer
 {
@@ -239,16 +240,27 @@ namespace DotSpatial.Plugins.BruTileLayer
             var tileSource = configuration.TileSource;
             // for wmts this might be some crude value (urn)
             var authorityCode = ToAuthotityCode(tileSource.Schema.Srs);
-            _sourceProjection = AuthorityCodeHandler.Instance[authorityCode];
+            if (!string.IsNullOrWhiteSpace(authorityCode))
+                _sourceProjection = AuthorityCodeHandler.Instance[authorityCode];
+            else
+            {
+                ProjectionInfo p;
+                if (!TryParseProjectionEsri(tileSource.Schema.Srs, out p))
+                    if (!TryParseProjectionProj4(tileSource.Schema.Srs, out p))
+                        p = AuthorityCodeHandler.Instance["EPSG:3857"];
+                _sourceProjection = p;
+            }
+
             if (_sourceProjection == null)
                 _sourceProjection = AuthorityCodeHandler.Instance["EPSG:3857"];
             
             // WebMercator: set datum to WGS1984 for better accuracy 
-            if (tileSource.Schema.Srs == "EPSG:3857") _sourceProjection.GeographicInfo.Datum = KnownCoordinateSystems.Geographic.World.WGS1984.GeographicInfo.Datum;
+            if (tileSource.Schema.Srs == "EPSG:3857") 
+                _sourceProjection.GeographicInfo.Datum = KnownCoordinateSystems.Geographic.World.WGS1984.GeographicInfo.Datum;
             
             Projection = _sourceProjection;
             var extent = tileSource.Schema.Extent;
-            MyExtent = new Extent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);
+            MyExtent = new DsExtent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);
 
             base.LegendText = configuration.LegendText;
             base.LegendItemVisible = true;
@@ -264,6 +276,30 @@ namespace DotSpatial.Plugins.BruTileLayer
             //Set the wrap mode
             _imageAttributes = new ImageAttributes();
             _imageAttributes.SetWrapMode(WrapMode.TileFlipXY);
+        }
+
+        private static bool TryParseProjectionProj4(string proj4, out ProjectionInfo projectionInfo)
+        {
+            try{
+                projectionInfo = ProjectionInfo.FromProj4String(proj4);
+            }
+            catch {
+                projectionInfo = null;
+            }
+            return projectionInfo != null;
+        }
+
+        private static bool TryParseProjectionEsri(string esriWkt, out ProjectionInfo projectionInfo)
+        {
+            try
+            {
+                projectionInfo = ProjectionInfo.FromEsriString(esriWkt);
+            }
+            catch
+            {
+                projectionInfo = null;
+            }
+            return projectionInfo != null;
         }
 
         private static string ToAuthotityCode(string srs)
@@ -288,11 +324,10 @@ namespace DotSpatial.Plugins.BruTileLayer
                 return srs;
 
             // urn:ogc:def:crs:EPSG:6.18.3:3857
-            if (srsParts.Length == 7)
-                return string.Format("{0}:{1}", srsParts[4], srsParts[6]);
+            if (srsParts.Length > 4)
+                return string.Format("{0}:{1}", srsParts[4], srsParts[srsParts.Length-1]);
 
-            // Should never reach here!
-            throw new ArgumentException("srs");
+            return "";
         }
 
         private void HandleTileReceived(object sender, TileReceivedEventArgs e)
@@ -332,10 +367,10 @@ namespace DotSpatial.Plugins.BruTileLayer
                     frm.BruTileLayer.MapFrame.Invalidate();
             }
         }
-
-        private static Extent FromBruTileExtent(BruTile.Extent extent)
+        
+        private static DsExtent FromBruTileExtent(BtExtent extent)
         {
-            return new Extent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);
+            return new DsExtent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);
         }
         
         /// <summary>
@@ -460,7 +495,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// Obtains an <see cref="Extent"/> in world coordinates that contains this object
         /// </summary>
         /// <returns></returns>
-        public override Extent Extent
+        public override DsExtent Extent
         {
             get
             {
@@ -540,9 +575,9 @@ namespace DotSpatial.Plugins.BruTileLayer
             }
         }
 
-        private static BruTile.Extent ToBrutileExtent(Extent extent)
+        private static BtExtent ToBrutileExtent(DsExtent extent)
         {
-            return new BruTile.Extent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);
+            return new BtExtent(extent.MinX, extent.MinY, extent.MaxX, extent.MaxY);
         }
 
         /*
@@ -559,7 +594,7 @@ namespace DotSpatial.Plugins.BruTileLayer
         /// This draws content from the specified geographic regions onto the specified graphics
         /// object specified by MapArgs.
         /// </summary>
-        public void DrawRegions(MapArgs args, List<Extent> regions)
+        public void DrawRegions(MapArgs args, List<DsExtent> regions)
         {
 
             // If this layer is not marked visible, exit
@@ -588,7 +623,7 @@ namespace DotSpatial.Plugins.BruTileLayer
                     return; 
                 }
 
-                BruTile.Extent extent;
+                BtExtent extent;
                 try
                 {
                      extent = ToBrutileExtent(geoExtent);

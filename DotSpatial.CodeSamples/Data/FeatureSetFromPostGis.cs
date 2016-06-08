@@ -13,7 +13,7 @@ namespace DotSpatial.Data
     {
         static FeatureSetFromPostGis()
         {
-            GeoAPI.GeometryServiceProvider.Instance = new NetTopologySuite. NetTopologySuite.NtsGeometryServices.Instance;
+            GeoAPI.GeometryServiceProvider.Instance = NetTopologySuite.NtsGeometryServices.Instance;
         }
 
         public static IFeatureSet LoadFeatureSet(string connectionString, string sql)

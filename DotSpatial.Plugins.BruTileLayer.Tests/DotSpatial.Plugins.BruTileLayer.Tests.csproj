@@ -15,7 +15,8 @@
     </TargetFrameworkProfile>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <NuGetPackageImportStamp>b9d0a3ea</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -35,16 +36,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BruTile, Version=0.13.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BruTile.0.13.0\lib\net40\BruTile.dll</HintPath>
+    <Reference Include="BruTile, Version=0.18.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\BruTile.0.18.2\lib\net40\BruTile.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="BruTile.Desktop, Version=0.13.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BruTile.Desktop.0.13.0\lib\net40\BruTile.Desktop.dll</HintPath>
+    <Reference Include="BruTile.Desktop, Version=0.18.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\BruTile.Desktop.0.18.2\lib\net40\BruTile.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="BruTile.MbTiles, Version=0.13.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BruTile.Desktop.0.13.0\lib\net40\BruTile.MbTiles.dll</HintPath>
+    <Reference Include="BruTile.MbTiles, Version=0.18.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\BruTile.Desktop.0.18.2\lib\net40\BruTile.MbTiles.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotSpatial.Controls, Version=1.7.0.0, Culture=neutral, PublicKeyToken=4d9e49339a7d240c, processorArchitecture=MSIL">

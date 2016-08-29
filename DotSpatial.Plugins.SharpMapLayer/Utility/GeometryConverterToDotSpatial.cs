@@ -419,7 +419,7 @@ namespace GeoAPI.Geometries
             var featureType = geometry.OgcGeometryType.ToDotSpatial();
             var shx = new DSShapeRange(featureType) { Extent = geometry.EnvelopeInternal.ToDotSpatial() };
             var vIndex = offset / 2;
-            shx.Parts = new List<DSPartRange>();
+            //shx.Parts = new List<DSPartRange>();
             var shapeStart = vIndex;
 
             for (var part = 0; part < geometry.NumGeometries; part++)
